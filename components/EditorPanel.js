@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { humanTimeLeft } from "@/lib/time";
 import { WritingWorkbench } from "@/components/WritingWorkbench";
+import { RichMarkdownStudio } from "@/components/RichMarkdownStudio";
 
 const SimpleMDE = dynamic(() => import("react-simplemde-editor"), { ssr: false });
 
@@ -127,6 +128,18 @@ export function EditorPanel({
         </div>
       </div>
 
+      <RichMarkdownStudio
+        t={t}
+        content={content}
+        handleContent={handleContent}
+        insights={insights}
+        status={status}
+        statusLabel={statusLabel}
+        showToast={showToast}
+      >
+        <SimpleMDE value={content} onChange={handleContent} options={mdeOptions} />
+      </RichMarkdownStudio>
+
       <WritingWorkbench
         t={t}
         insights={insights}
@@ -137,8 +150,6 @@ export function EditorPanel({
         goalProgress={goalProgress}
         {...localSafety}
       />
-
-      <SimpleMDE value={content} onChange={handleContent} options={mdeOptions} />
 
       <div className="editorFooter">
         <div className="exportGroup">
