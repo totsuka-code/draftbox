@@ -9,10 +9,38 @@ import { cookies } from "next/headers";
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
-export const metadata = { title: "DraftBox", description: "Lightweight markdown drafts" };
+const siteUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://draftbox.app";
+const siteDescription =
+  "DraftBox is a lightweight Markdown draft editor with character counts, export tools, and private cloud sync.";
+
+export const metadata = {
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "DraftBox",
+    template: "%s | DraftBox",
+  },
+  description: siteDescription,
+  applicationName: "DraftBox",
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: "DraftBox",
+    title: "DraftBox",
+    description: siteDescription,
+  },
+  twitter: {
+    card: "summary",
+    title: "DraftBox",
+    description: siteDescription,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
 
 export default async function RootLayout({ children }) {
-  // Cookieの i18n_lang を取得（なければ ja）
+  // Read the language cookie on the server so html lang stays consistent.
   const cookieStore = await cookies();
   const langCookie = cookieStore.get("i18n_lang")?.value;
   const initialLang = langCookie === "en" ? "en" : "ja";
@@ -20,7 +48,7 @@ export default async function RootLayout({ children }) {
   return (
     <html lang={initialLang}>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {/* Provider に初期言語を渡す → サーバーとクライアントで一致 */}
+        {/* Keep provider state aligned with the server-selected language. */}
         <Providers defaultLang={initialLang}>
           <NavBar />
           {children}
