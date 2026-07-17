@@ -2,19 +2,20 @@
 
 "use client";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabaseClient";
 import { useI18n } from "@/lib/i18n";
 import { LIMITS, byteLength, validateDraft } from "@/lib/policy";
 import { countGraphemes, getTextStats, stripMarkdown } from "@/lib/textMetrics";
 import { filterAndSortDrafts } from "@/lib/draftFilters";
 import { getMarkdownEditorOptions } from "@/lib/editorOptions";
-import { computeExpiresISO, humanTimeLeft, toDatetimeLocalString } from "@/lib/time";
+import { computeExpiresISO, toDatetimeLocalString } from "@/lib/time";
 import { exportHtmlDraft, exportMarkdownDraft, exportTextDraft } from "@/lib/draftExport";
 import { debounce } from "@/lib/debounce";
-import { Stat } from "@/components/Stat";
+import { DraftListPanel } from "@/components/DraftListPanel";
+import { EditorPanel } from "@/components/EditorPanel";
+import { HeaderAuth } from "@/components/HeaderAuth";
+import { StatsSummary } from "@/components/StatsSummary";
 
-const SimpleMDE = dynamic(() => import("react-simplemde-editor"), { ssr: false });
 
 /* ===================================================================
  * メインコンポーネント
@@ -366,360 +367,95 @@ export default function Page() {
   // ===================================================================
   return (
     <div className="container">
-      {/* ヘッダー */}
-      <header className="header">
-        <div>
-          <div className="brand">{t("brand")}</div>
-          <div className="kicker">{t("tagline")}</div>
-        </div>
-        <div>
-          <div className="toolbar" style={{ justifyContent: "flex-end", marginBottom: 6 }}>
-            <label className="kicker" htmlFor="lang" style={{ marginRight: 4 }}>{t("language")}</label>
-            <select id="lang" className="input" value={lang} onChange={(e) => setLang(e.target.value)} aria-label={t("language")}>
-              <option value="ja">日本語</option>
-              <option value="en">English</option>
-            </select>
-          </div>
+      <HeaderAuth
+        t={t}
+        lang={lang}
+        setLang={setLang}
+        user={user}
+        signOut={signOut}
+        authMode={authMode}
+        setAuthMode={setAuthMode}
+        email={email}
+        setEmail={setEmail}
+        password={password}
+        setPassword={setPassword}
+        handleAuth={handleAuth}
+        showReset={showReset}
+        setShowReset={setShowReset}
+        resetEmail={resetEmail}
+        setResetEmail={setResetEmail}
+        sendReset={sendReset}
+      />
 
-          {user ? (
-            <div className="toolbar" style={{ justifyContent: "flex-end" }}>
-              <span className="kicker">{user.email}</span>
-              <button className="button" onClick={signOut}>{t("logout")}</button>
-            </div>
-          ) : (
-            <>
-              <form onSubmit={handleAuth} className="toolbar" style={{ justifyContent: "flex-end" }}>
-                <div className="formTabs">
-                  <button
-                    type="button"
-                    className="button"
-                    aria-pressed={authMode === "signin"}
-                    onClick={() => setAuthMode("signin")}
-                  >
-                    {t("signin")}
-                  </button>
-                  <button
-                    type="button"
-                    className="button"
-                    aria-pressed={authMode === "signup"}
-                    onClick={() => setAuthMode("signup")}
-                  >
-                    {t("signup")}
-                  </button>
-                </div>
-                <input className="input" type="email" required placeholder={t("email")}
-                  value={email} onChange={(e) => setEmail(e.target.value)} />
-                <input className="input" type="password" required placeholder={t("password")}
-                  value={password} onChange={(e) => setPassword(e.target.value)} />
-                <button className="button primary" type="submit">
-                  {authMode === "signin" ? t("login") : t("register")}
-                </button>
-                <button type="button" className="button ghost" onClick={() => setShowReset(v => !v)}>
-                  {t("forgot")}
-                </button>
-              </form>
-
-              {showReset && (
-                <form onSubmit={sendReset} className="toolbar" style={{ justifyContent: "flex-end", marginTop: 6 }}>
-                  <input className="input" type="email" required placeholder={t("email")}
-                    value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} />
-                  <button className="button" type="submit">{t("send")}</button>
-                </form>
-              )}
-            </>
-          )}
-        </div>
-      </header>
-
-      {/* カウンターバー */}
-      <div className="counterBar" style={{ marginBottom: 12 }}>
-        <span className="badge" aria-label={t("counter")}>
-          <span>{t("counter")}</span> <strong>{charCount}</strong>
-        </span>
-        <div className="settings">
-          <span className="kicker">下書き {draftsCount} / {LIMITS.MAX_DRAFTS_PER_USER}</span>
-          <span className="kicker">本文 {byteLength(content)} / {LIMITS.MAX_CONTENT_BYTES} B</span>
-        </div>
-      </div>
-
-      {/* 詳細カウント */}
-      <section className="card section" style={{ marginBottom: 12 }}>
-        <h3 style={{ marginBottom: 8 }}>{t("stats.title")}</h3>
-        <div className="grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8 }}>
-          <Stat label={t("stats.chars")} value={stats.chars} unit="文字" />
-          <Stat label={t("stats.charsNoNL")} value={stats.charsNoNL} unit="文字" />
-          <Stat label={t("stats.charsNoNLSpace")} value={stats.charsNoNLSpace} unit="文字" />
-          <Stat label={t("stats.bytesUtf8")} value={stats.bytesUTF8} unit="バイト" />
-          <Stat label={t("stats.bytesUtf16")} value={stats.bytesUTF16} unit="バイト" />
-          <Stat label={t("stats.bytesSjis")} value={stats.bytesSJIS} unit="バイト" />
-          <Stat label={t("stats.bytesEucjp")} value={stats.bytesEUCJP} unit="バイト" />
-          <Stat label={t("stats.bytesJis")} value={stats.bytesJIS} unit="バイト" />
-          <Stat label={t("stats.lines")} value={stats.lines} unit="行" />
-          <Stat label={t("stats.genkoyoshi")} value={stats.genkoyoshi} unit="枚" />
-        </div>
-        <p className="kicker" style={{ marginTop: 6 }}>
-          ※ Shift-JIS / EUC-JP / JIS のバイト数は簡易推定です。
-        </p>
-      </section>
+      <StatsSummary
+        t={t}
+        charCount={charCount}
+        draftsCount={draftsCount}
+        content={content}
+        stats={stats}
+      />
 
       <div className="layout">
-        {/* 左：下書き一覧 */}
-        <aside className="card section" aria-label="下書き一覧">
-          <div className="toolbar" style={{ marginBottom: 8 }}>
-            <button
-              className="button primary"
-              onClick={createDraft}
-              disabled={!user || draftsCount >= LIMITS.MAX_DRAFTS_PER_USER}
-            >
-              {t("drafts.new")}
-            </button>
-            {!user && <span className="kicker">{t("drafts.needLogin")}</span>}
-            {user && draftsCount >= LIMITS.MAX_DRAFTS_PER_USER && (
-              <span className="kicker">{t("drafts.limitHit")}</span>
-            )}
-          </div>
+        <DraftListPanel
+          t={t}
+          user={user}
+          drafts={drafts}
+          draftsCount={draftsCount}
+          currentId={currentId}
+          filteredDrafts={filteredDrafts}
+          createDraft={createDraft}
+          selectDraft={selectDraft}
+          q={q}
+          setQ={setQ}
+          dateFrom={dateFrom}
+          setDateFrom={setDateFrom}
+          dateTo={dateTo}
+          setDateTo={setDateTo}
+          minChars={minChars}
+          setMinChars={setMinChars}
+          maxChars={maxChars}
+          setMaxChars={setMaxChars}
+          showFilters={showFilters}
+          setShowFilters={setShowFilters}
+          sortField={sortField}
+          setSortField={setSortField}
+          sortDir={sortDir}
+          setSortDir={setSortDir}
+        />
 
-          {/* 検索・ソート：コンパクトヘッダー */}
-          <div className="toolbar" style={{ gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
-            <input
-              className="input"
-              type="search"
-              placeholder={t("searchUi.placeholder")}
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              style={{ flex: 1, minWidth: 160 }}
-              aria-label={t("searchUi.search")}
-            />
-
-            {/* ソートのセグメント（更新/タイトル/文字数） */}
-            <div className="seg" role="group" aria-label="Sort field">
-              <button
-                type="button"
-                className={`seg-btn ${sortField === "updated" ? "active" : ""}`}
-                onClick={() => setSortField("updated")}
-                aria-pressed={sortField === "updated"}
-                title="更新日"
-              >
-                ⏱
-              </button>
-              <button
-                type="button"
-                className={`seg-btn ${sortField === "title" ? "active" : ""}`}
-                onClick={() => setSortField("title")}
-                aria-pressed={sortField === "title"}
-                title="タイトル"
-              >
-                A↔Z
-              </button>
-              <button
-                type="button"
-                className={`seg-btn ${sortField === "chars" ? "active" : ""}`}
-                onClick={() => setSortField("chars")}
-                aria-pressed={sortField === "chars"}
-                title="文字数"
-              >
-                #
-              </button>
-            </div>
-
-            {/* 昇順/降順トグル */}
-            <button
-              type="button"
-              className="button ghost"
-              onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
-              aria-label="昇順/降順"
-              title="昇順/降順"
-            >
-              {sortDir === "asc" ? "▲" : "▼"}
-            </button>
-
-            {/* 詳細フィルタの開閉 */}
-            <button
-              type="button"
-              className="button"
-              onClick={() => setShowFilters((v) => !v)}
-              aria-expanded={showFilters}
-              aria-controls="filters-panel"
-            >
-              {t("searchUi.filters")}
-            </button>
-          </div>
-
-          {/* 折りたたみ：詳細フィルタ */}
-          {showFilters && (
-            <div id="filters-panel" className="card soft" style={{ padding: 8, marginBottom: 8 }}>
-              <div className="toolbar" style={{ gap: 8, flexWrap: "wrap" }}>
-                <div className="field-inline">
-                  <label className="kicker" htmlFor="from">{t("searchUi.from")}</label>
-                  <input id="from" className="input" type="date" value={dateFrom} onChange={(e)=>setDateFrom(e.target.value)} />
-                </div>
-                <div className="field-inline">
-                  <label className="kicker" htmlFor="to">{t("searchUi.to")}</label>
-                  <input id="to" className="input" type="date" value={dateTo} onChange={(e)=>setDateTo(e.target.value)} />
-                </div>
-
-                {/* 文字数最小/最大 */}
-                <div className="field-inline">
-                  <label className="kicker" htmlFor="minc">{t("searchUi.minChars")}</label>
-                  <input
-                    id="minc"
-                    className="input input-narrow"
-                    type="number"
-                    min="0"
-                    value={minChars}
-                    onChange={(e)=>setMinChars(e.target.value)}
-                  />
-                </div>
-
-                <div className="field-inline">
-                  <label className="kicker" htmlFor="maxc">{t("searchUi.maxChars")}</label>
-                  <input
-                    id="maxc"
-                    className="input input-narrow"
-                    type="number"
-                    min="0"
-                    value={maxChars}
-                    onChange={(e)=>setMaxChars(e.target.value)}
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  className="button ghost"
-                  onClick={() => { setQ(""); setDateFrom(""); setDateTo(""); setMinChars(""); setMaxChars(""); }}
-                  style={{ marginLeft: "auto" }}
-                >
-                  {t("searchUi.clear")}
-                </button>
-              </div>
-
-              <div className="kicker" style={{ marginTop: 6 }}>
-                {t("searchUi.showing", { shown: filteredDrafts.length, total: drafts.length })}
-              </div>
-            </div>
-          )}
-
-
-          <ul className="list">
-            {user && filteredDrafts.map((d) => (
-              <li
-                key={d.id}
-                className={`item ${d.id === currentId ? "active" : ""}`}
-                onClick={() => selectDraft(d)}
-              >
-                <div style={{ fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {d.title || t("title")}
-                </div>
-                <div className="metaChip" aria-label="更新日時">
-                  {new Date(d.updated_at).toLocaleString()}
-                </div>
-              </li>
-            ))}
-            {user && filteredDrafts.length === 0 && <li className="kicker">{t("drafts.empty")}</li>}
-            {!user && <li className="kicker">{t("drafts.needLogin")}</li>}
-          </ul>
-        </aside>
-
-        {/* 右：エディタ */}
-        <section className="card section" aria-label="エディタ">
-          {/* タイトル行 */}
-          <div className="titleRow" style={{ marginBottom: 8 }}>
-            <input
-              className="input"
-              style={{ width: "100%", fontSize: 18, fontWeight: 600 }}
-              value={title}
-              onChange={(e) => handleTitle(e.target.value)}
-              placeholder={t("title")}
-              aria-label={t("title")}
-            />
-            {!user && (
-              <span className="kicker clamp-1" style={{ marginTop: 4 }}>
-                ※未サインイン：このタイトルはエクスポート時のファイル名にのみ利用されます（保存不可）
-              </span>
-            )}
-          </div>
-
-          {/* 共有 & エクスポート */}
-          <div className="toolbar" style={{ gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
-            {/* 共有状態 */}
-            {shareToken ? (
-              <>
-                <a className="button" href={shareURL} target="_blank" rel="noreferrer">{t("share.open")}</a>
-                <button className="button" onClick={async () => {
-                  try {
-                    await navigator.clipboard?.writeText(shareURL);
-                    showToast(t("share.copy"));
-                  } catch {
-                    showToast("コピーに失敗しました。共有リンクを手動で選択してください。");
-                  }
-                }}>
-                  {t("share.copy")}
-                </button>
-                <span className="kicker">
-                  {t("share.expiry")}：
-                  {shareExpiresAt
-                    ? `${new Date(shareExpiresAt).toLocaleString()}（${t("share.expiresIn", { time: humanTimeLeft(shareExpiresAt) })}）`
-                    : t("share.none")}
-                </span>
-                <button className="button danger" onClick={revokeShare}>{t("share.revoke")}</button>
-              </>
-            ) : (
-              <span className="kicker">{t("share.notIssued")}</span>
-            )}
-
-            {/* 期限設定 */}
-            <div className="divider" />
-            <label className="kicker" htmlFor="expiry">{t("share.expiry")}</label>
-            <select
-              id="expiry"
-              className="input"
-              value={expiryMode}
-              onChange={(e) => setExpiryMode(e.target.value)}
-              aria-label={t("share.expiry")}
-            >
-              <option value="none">{t("share.options.none")}</option>
-              <option value="24h">{t("share.options.h24")}</option>
-              <option value="7d">{t("share.options.d7")}</option>
-              <option value="custom">{t("share.options.custom")}</option>
-            </select>
-            {expiryMode === "custom" && (
-              <input
-                className="input"
-                type="datetime-local"
-                value={expiryCustom}
-                onChange={(e) => setExpiryCustom(e.target.value)}
-                aria-label={t("share.options.custom")}
-              />
-            )}
-            {shareToken ? (
-              <button className="button" onClick={updateExpiry} disabled={!user || !currentId}>{t("share.update")}</button>
-            ) : (
-              <button className="button" onClick={createShare} disabled={!user || !currentId}>{t("share.issue")}</button>
-            )}
-
-            {/* エクスポート */}
-            <div className="divider" />
-            <button className="button" onClick={exportMD}>{t("export.md")}</button>
-            <button className="button" onClick={exportHTML}>{t("export.html")}</button>
-            <button className="button" onClick={exportTXT}>{t("export.txt")}</button>
-          </div>
-
-          {/* エディタ本体 */}
-          <SimpleMDE value={content} onChange={handleContent} options={mdeOptions} />
-
-          {/* 下部操作 */}
-          <div className="toolbar" style={{ marginTop: 8, justifyContent: "flex-end", gap: 10 }}>
-            <span className={`statusChip ${status}`}>{statusLabel}</span>
-            <button className="button" onClick={saveNow} disabled={!user}>{t("actions.saveNow")}</button>
-            {user && currentId ? (
-              <button className="button danger" onClick={deleteCurrentDraft}>{t("actions.deleteThisDraft")}</button>
-            ) : null}
-          </div>
-        </section>
+        <EditorPanel
+          t={t}
+          user={user}
+          currentId={currentId}
+          title={title}
+          content={content}
+          handleTitle={handleTitle}
+          handleContent={handleContent}
+          shareToken={shareToken}
+          shareURL={shareURL}
+          shareExpiresAt={shareExpiresAt}
+          expiryMode={expiryMode}
+          setExpiryMode={setExpiryMode}
+          expiryCustom={expiryCustom}
+          setExpiryCustom={setExpiryCustom}
+          updateExpiry={updateExpiry}
+          createShare={createShare}
+          revokeShare={revokeShare}
+          showToast={showToast}
+          exportMD={exportMD}
+          exportHTML={exportHTML}
+          exportTXT={exportTXT}
+          mdeOptions={mdeOptions}
+          status={status}
+          statusLabel={statusLabel}
+          saveNow={saveNow}
+          deleteCurrentDraft={deleteCurrentDraft}
+        />
       </div>
 
       {toast && <div className="toast" role="status" aria-live="polite">{toast}</div>}
     </div>
   );
+
 }
 
