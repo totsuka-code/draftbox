@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 const SNIPPETS = [
   { key: "h2", label: "H2", text: "## 見出し\n\n" },
   { key: "quote", label: "引用", text: "> 引用文をここに入力\n\n" },
@@ -18,6 +20,13 @@ export function RichMarkdownStudio({
   showToast,
   children,
 }) {
+  const [focusMode, setFocusMode] = useState(false);
+
+  useEffect(() => {
+    document.body.classList.toggle("writingFocusActive", focusMode);
+    return () => document.body.classList.remove("writingFocusActive");
+  }, [focusMode]);
+
   const appendSnippet = (snippet) => {
     const separator = content && !content.endsWith("\n") ? "\n\n" : "";
     handleContent(`${content || ""}${separator}${snippet.text}`);
@@ -25,7 +34,7 @@ export function RichMarkdownStudio({
   };
 
   return (
-    <section className="richEditorShell" aria-label={t("studio.title")}>
+    <section className={`richEditorShell ${focusMode ? "focusMode" : ""}`} aria-label={t("studio.title")}>
       <div className="composerHeader">
         <div className="composerTitleGroup">
           <span className="composerEyebrow">{t("studio.eyebrow")}</span>
@@ -35,11 +44,20 @@ export function RichMarkdownStudio({
           <span className={`statusChip ${status}`}>{statusLabel}</span>
           <span>{insights.chars.toLocaleString()} {t("workbench.units.chars")}</span>
           <span>{insights.readingMinutes}{t("workbench.units.minutes")}</span>
+          <button
+            className="focusToggle"
+            type="button"
+            aria-pressed={focusMode}
+            onClick={() => setFocusMode((value) => !value)}
+          >
+            {focusMode ? t("studio.focusOff") : t("studio.focusOn")}
+          </button>
         </div>
       </div>
 
       <div className="studioCommandBar">
         <div className="snippetGroup" aria-label={t("studio.snippets")}>
+          <span className="snippetLabel">{t("studio.snippets")}</span>
           {SNIPPETS.map((snippet) => (
             <button
               className="snippetButton"

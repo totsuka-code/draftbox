@@ -1538,3 +1538,171 @@ ol {
     min-height: 500px;
   }
 }
+
+/* Comfortable writing surface */
+.richEditorShell {
+  border-color: rgba(23, 126, 114, 0.18);
+}
+
+.composerHeader {
+  padding: 14px var(--space-4);
+}
+
+.composerTitleGroup h2 {
+  font-size: 1rem;
+}
+
+.composerStatus {
+  justify-content: flex-end;
+}
+
+.focusToggle {
+  min-height: 32px;
+  border: 1px solid rgba(23, 126, 114, 0.36);
+  border-radius: 999px;
+  padding: 5px 12px;
+  background: rgba(23, 126, 114, 0.1);
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.focusToggle[aria-pressed="true"] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-fg);
+}
+
+.studioCommandBar {
+  padding: 10px var(--space-4);
+}
+
+.snippetLabel {
+  align-self: center;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.snippetButton {
+  min-height: 30px;
+  padding: 5px 9px;
+  background: transparent;
+}
+
+.editorCanvas {
+  padding: clamp(16px, 2.6vw, 32px);
+  background:
+    radial-gradient(circle at 50% 0, rgba(23, 126, 114, 0.08), transparent 280px),
+    var(--panel-soft);
+}
+
+.richEditorShell .EasyMDEContainer {
+  max-width: 880px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-color: rgba(23, 126, 114, 0.22);
+  background: var(--panel);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.12);
+}
+
+.richEditorShell .editor-toolbar {
+  justify-content: center;
+  padding: 8px 12px;
+}
+
+.richEditorShell .editor-toolbar button {
+  width: 32px;
+  height: 32px;
+}
+
+.richEditorShell .EasyMDEContainer .CodeMirror {
+  min-height: min(68vh, 760px);
+  font-size: 1.08rem;
+  line-height: 1.9;
+  letter-spacing: 0;
+}
+
+.richEditorShell .CodeMirror-scroll {
+  padding-block: 28px;
+}
+
+.richEditorShell .CodeMirror pre.CodeMirror-line,
+.richEditorShell .CodeMirror pre.CodeMirror-line-like {
+  padding-inline: clamp(22px, 5vw, 64px);
+}
+
+.richEditorShell.focusMode .studioCommandBar {
+  display: none;
+}
+
+.richEditorShell.focusMode .composerHeader {
+  border-bottom: 0;
+}
+
+.richEditorShell.focusMode .editorCanvas {
+  padding-block: clamp(24px, 4vw, 48px);
+}
+
+.richEditorShell.focusMode .EasyMDEContainer {
+  max-width: 800px;
+}
+
+.richEditorShell.focusMode .EasyMDEContainer .CodeMirror {
+  min-height: 74vh;
+}
+
+@media (max-width: 680px) {
+  .composerStatus {
+    justify-content: flex-start;
+  }
+
+  .editorCanvas {
+    padding: var(--space-3);
+  }
+
+  .richEditorShell .EasyMDEContainer {
+    max-width: 100%;
+    box-shadow: none;
+  }
+
+  .richEditorShell .EasyMDEContainer .CodeMirror {
+    min-height: 560px;
+    font-size: 1rem;
+  }
+}
+
+/* Page-level writing focus */
+body.writingFocusActive .appHeader,
+body.writingFocusActive .statsPanel,
+body.writingFocusActive .draftPanel,
+body.writingFocusActive .shareBox,
+body.writingFocusActive .workbench,
+body.writingFocusActive .editorFooter {
+  display: none;
+}
+
+body.writingFocusActive .layout {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+body.writingFocusActive .editorPanel {
+  width: min(1120px, 100%);
+  margin-inline: auto;
+}
+
+body.writingFocusActive .editorHeader {
+  margin-bottom: var(--space-3);
+}
+
+body.writingFocusActive .titleInput {
+  font-size: 1.45rem;
+}
+
+body.writingFocusActive .richEditorShell {
+  border-color: rgba(23, 126, 114, 0.26);
+}
+
+@media (max-width: 680px) {
+  body.writingFocusActive .editorHeader {
+    display: none;
+  }
+}
