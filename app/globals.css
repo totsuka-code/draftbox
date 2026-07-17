@@ -2075,3 +2075,29 @@ body.writingFocusActive .writingColumn {
     order: 2;
   }
 }
+
+/* Editor overlap repair */
+.editorHeader {
+  position: static;
+  top: auto;
+  z-index: auto;
+  backdrop-filter: none;
+}
+
+.editorWorkspaceGrid {
+  clear: both;
+}
+
+.writingColumn {
+  padding-top: 20px;
+}
+
+.richEditorShell {
+  position: relative;
+}
+
+@media (max-width: 680px) {
+  .writingColumn {
+    padding-top: 12px;
+  }
+}
