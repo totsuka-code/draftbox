@@ -1,7 +1,5 @@
 "use client";
 
-import { PLAN_LANES } from "@/lib/monetization";
-
 const SNIPPETS = [
   { key: "h2", label: "H2", text: "## 見出し\n\n" },
   { key: "quote", label: "引用", text: "> 引用文をここに入力\n\n" },
@@ -51,14 +49,6 @@ export function RichMarkdownStudio({
             >
               {snippet.label}
             </button>
-          ))}
-        </div>
-        <div className="planRail" aria-label={t("studio.planRail")}>
-          {PLAN_LANES.map((lane) => (
-            <span className={`planPill ${lane.tier}`} key={lane.id}>
-              <strong>{t(lane.labelKey)}</strong>
-              <small>{t(lane.captionKey)}</small>
-            </span>
           ))}
         </div>
       </div>
