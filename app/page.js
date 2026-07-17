@@ -11,6 +11,8 @@ import { getMarkdownEditorOptions } from "@/lib/editorOptions";
 import { computeExpiresISO, toDatetimeLocalString } from "@/lib/time";
 import { exportHtmlDraft, exportMarkdownDraft, exportTextDraft } from "@/lib/draftExport";
 import { debounce } from "@/lib/debounce";
+import { createDraft as createDraftRecord, deleteDraft, listDrafts, updateDraft } from "@/lib/draftRepository";
+import { deleteDraftShare, getDraftShare, saveDraftShare, updateDraftShareExpiry } from "@/lib/shareRepository";
 import { DraftListPanel } from "@/components/DraftListPanel";
 import { EditorPanel } from "@/components/EditorPanel";
 import { HeaderAuth } from "@/components/HeaderAuth";
@@ -124,11 +126,7 @@ export default function Page() {
   // 一覧取得
   const loadDrafts = useCallback(async () => {
     if (!user) return;
-    const { data, count, error } = await supabase
-      .from("drafts")
-      .select("id,title,content,updated_at", { count: "exact" })
-      .order("updated_at", { ascending: false })
-      .limit(1000);
+    const { data, count, error } = await listDrafts();
     if (error) return showToast(`下書きの読み込みに失敗しました: ${error.message}`);
     setDrafts(data || []);
     setDraftsCount(typeof count === "number" ? count : data?.length || 0);
@@ -150,11 +148,7 @@ export default function Page() {
   // 共有設定取得
   const fetchShare = useCallback(async (draftId) => {
     if (!user || !draftId) { setShareToken(null); setShareExpiresAt(null); return; }
-    const { data, error } = await supabase
-      .from("draft_shares")
-      .select("token, expires_at")
-      .eq("draft_id", draftId)
-      .maybeSingle();
+    const { data, error } = await getDraftShare(draftId);
     if (error) { setShareToken(null); setShareExpiresAt(null); return; }
     setShareToken(data?.token || null);
     setShareExpiresAt(data?.expires_at || null);
@@ -173,7 +167,7 @@ export default function Page() {
       if (!user || !id) return;
       setStatus("saving");
       const thisSaveId = ++lastSaveIdRef.current;
-      const { error } = await supabase.from("drafts").update({ ...patch }).eq("id", id);
+      const { error } = await updateDraft(id, patch);
       // 後から来た保存が完了している可能性もあるため、最後のもののみ反映
       if (thisSaveId !== lastSaveIdRef.current) return;
       if (error) { setStatus("error"); showToast(`保存に失敗しました: ${error.message}`); }
@@ -198,9 +192,11 @@ export default function Page() {
     const initialContent = patch.content ?? content ?? "";
     const err = validateDraft({ title: initialTitle, content: initialContent, count: draftsCount });
     if (err) { setStatus("error"); showToast(err); return null; }
-    const { data, error } = await supabase
-      .from("drafts").insert({ user_id: user.id, title: initialTitle, content: initialContent })
-      .select().single();
+    const { data, error } = await createDraftRecord({
+      userId: user.id,
+      title: initialTitle,
+      content: initialContent,
+    });
     if (error) { setStatus("error"); showToast(`下書きの作成に失敗しました: ${error.message}`); return null; }
     setDrafts((p) => [data, ...p]); setDraftsCount((n) => n + 1);
     setCurrentId(data.id); setTitle(data.title); setContent(data.content);
@@ -244,7 +240,7 @@ export default function Page() {
     setStatus("saving");
     let id = currentId;
     if (!id) { id = await ensureDraftAndMaybeSave({}); if (!id) return; }
-    const { error } = await supabase.from("drafts").update({ title, content }).eq("id", id);
+    const { error } = await updateDraft(id, { title, content });
     if (error) { setStatus("error"); showToast(`保存に失敗しました: ${error.message}`); }
     else { setStatus("saved"); window.setTimeout(() => setStatus("idle"), 1200); }
   }, [user, currentId, title, content, draftsCount, ensureDraftAndMaybeSave, showToast]);
@@ -266,10 +262,11 @@ export default function Page() {
   const createShare = useCallback(async () => {
     if (!user || !currentId) return showToast("共有対象の下書きがありません。");
     const expires_at = computeExpiresISO(expiryMode, expiryCustom);
-    const { data, error } = await supabase
-      .from("draft_shares")
-      .upsert({ draft_id: currentId, user_id: user.id, expires_at }, { onConflict: "draft_id", ignoreDuplicates: false })
-      .select("token, expires_at").single();
+    const { data, error } = await saveDraftShare({
+      draftId: currentId,
+      userId: user.id,
+      expiresAt: expires_at,
+    });
     if (error) return showToast(`共有リンクの作成に失敗しました: ${error.message}`);
     setShareToken(data.token); setShareExpiresAt(data.expires_at || null);
     showToast("共有リンクを発行しました。");
@@ -278,7 +275,7 @@ export default function Page() {
   const updateExpiry = useCallback(async () => {
     if (!user || !currentId || !shareToken) return;
     const expires_at = computeExpiresISO(expiryMode, expiryCustom);
-    const { error } = await supabase.from("draft_shares").update({ expires_at }).eq("draft_id", currentId);
+    const { error } = await updateDraftShareExpiry(currentId, expires_at);
     if (error) return showToast(`有効期限の更新に失敗しました: ${error.message}`);
     setShareExpiresAt(expires_at || null);
     showToast(expires_at ? "有効期限を更新しました。" : "有効期限を解除しました。");
@@ -286,7 +283,7 @@ export default function Page() {
 
   const revokeShare = useCallback(async () => {
     if (!user || !currentId) return;
-    const { error } = await supabase.from("draft_shares").delete().eq("draft_id", currentId);
+    const { error } = await deleteDraftShare(currentId);
     if (error) return showToast(`共有リンクの無効化に失敗しました: ${error.message}`);
     setShareToken(null); showToast("共有リンクを無効化しました。");
   }, [user, currentId, showToast]);
@@ -308,11 +305,11 @@ export default function Page() {
     if (!user) return showToast("保存にはサインインが必要です。");
     const err = validateDraft({ title, content, count: draftsCount });
     if (err) return showToast(err);
-    const { data, error } = await supabase
-      .from("drafts")
-      .insert({ user_id: user.id, title: t("title"), content: "" })
-      .select()
-      .single();
+    const { data, error } = await createDraftRecord({
+      userId: user.id,
+      title: t("title"),
+      content: "",
+    });
     if (error) return showToast(`下書きの作成に失敗しました: ${error.message}`);
     setDrafts((prev) => [data, ...prev]);
     setDraftsCount((count) => count + 1);
@@ -324,7 +321,7 @@ export default function Page() {
   const deleteCurrentDraft = useCallback(async () => {
     if (!user || !currentId) return;
     if (!confirm(t("actions.confirmDelete"))) return;
-    const { error } = await supabase.from("drafts").delete().eq("id", currentId);
+    const { error } = await deleteDraft(currentId);
     if (error) return showToast(`削除に失敗しました: ${error.message}`);
     const next = drafts.find((draft) => draft.id !== currentId);
     setDrafts((prev) => prev.filter((draft) => draft.id !== currentId));
