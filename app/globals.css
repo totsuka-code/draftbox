@@ -763,3 +763,1341 @@ ol {
     min-height: 420px;
   }
 }
+
+
+/* UI layout repair pass */
+.appHeader {
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+.brandBlock {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow-sm);
+}
+
+.accountPanel {
+  justify-items: stretch;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow-sm);
+}
+
+.languageRow {
+  justify-content: flex-start;
+  margin-bottom: var(--space-2);
+}
+
+.authForm {
+  display: grid;
+  grid-template-columns: auto minmax(180px, 1fr) minmax(180px, 1fr) auto auto;
+  align-items: center;
+}
+
+.resetForm {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  margin-top: var(--space-2);
+}
+
+.configNotice {
+  margin-top: var(--space-2);
+  padding: 8px 10px;
+  border: 1px solid rgba(161, 98, 7, 0.35);
+  border-radius: var(--radius-sm);
+  color: var(--warning);
+  background: rgba(161, 98, 7, 0.08);
+  font-size: 0.85rem;
+}
+
+.statsPanel {
+  grid-template-columns: minmax(260px, 380px) minmax(0, 1fr);
+}
+
+.statsGrid {
+  grid-template-columns: repeat(auto-fit, minmax(124px, 1fr));
+}
+
+.statCard {
+  border-right: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.statCard:nth-last-child(-n + 4) {
+  border-bottom: 0;
+}
+
+.shareBox {
+  grid-template-columns: 1fr;
+}
+
+.shareControls,
+.expiryControls,
+.exportGroup {
+  align-items: center;
+}
+
+.EasyMDEContainer .CodeMirror {
+  min-height: 520px;
+}
+
+@media (max-width: 980px) {
+  .authForm {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .authForm .formTabs {
+    grid-column: 1 / -1;
+    width: fit-content;
+  }
+
+  .statsPanel {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .brandBlock,
+  .accountPanel,
+  .panel {
+    padding: var(--space-3);
+  }
+
+  .authForm,
+  .resetForm {
+    grid-template-columns: 1fr;
+  }
+
+  .authForm .formTabs {
+    width: 100%;
+  }
+
+  .formTabs .button {
+    flex: 1;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .statCard:nth-last-child(-n + 4) {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .statCard:nth-last-child(-n + 2) {
+    border-bottom: 0;
+  }
+}
+
+/* Navigation repair pass */
+.nav-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(14px);
+}
+
+.nav.container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 64px;
+  padding-block: 10px;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.nav-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 780;
+  white-space: nowrap;
+}
+
+.nav-logo {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.nav-link:hover {
+  background: var(--panel-soft);
+  color: var(--fg);
+}
+
+.nav-link.active {
+  background: var(--panel);
+  color: var(--fg);
+  box-shadow: var(--shadow-sm);
+}
+
+.nav-burger {
+  display: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  cursor: pointer;
+}
+
+.nav-burger span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  margin: 2px 0;
+  border-radius: 999px;
+  background: var(--fg);
+}
+
+@media (max-width: 760px) {
+  .nav.container {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .nav-burger {
+    display: grid;
+    margin-left: auto;
+  }
+
+  .nav-links {
+    display: none;
+    width: 100%;
+    margin-left: 0;
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--border);
+  }
+
+  .nav-links.open {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .nav-link {
+    justify-content: flex-start;
+    width: 100%;
+  }
+}
+
+/* Writing workbench */
+.workbench {
+  display: grid;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel-soft);
+}
+
+.workbenchHeader,
+.goalPanel,
+.safetyPanel,
+.snapshotItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.workbenchHeader h2,
+.reviewPanel h3,
+.outlinePanel h3,
+.safetyPanel h3 {
+  font-size: 1rem;
+}
+
+.workbenchHeader p,
+.safetyPanel p,
+.emptyHint {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.qualityBadge {
+  display: grid;
+  place-items: center;
+  min-width: 92px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.qualityBadge span {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.qualityBadge strong {
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.goalPanel {
+  align-items: flex-end;
+  flex-wrap: wrap;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.goalControls,
+.safetyActions,
+.snapshotActions {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.goalControls label {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.progressTrack {
+  flex: 1 1 180px;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--border);
+}
+
+.progressTrack span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+}
+
+.goalMeta {
+  display: grid;
+  min-width: 86px;
+  text-align: right;
+}
+
+.goalMeta span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.insightGrid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(90px, 1fr));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--panel);
+}
+
+.insightMetric {
+  display: grid;
+  gap: 4px;
+  min-height: 72px;
+  padding: 10px;
+  border-right: 1px solid var(--border);
+}
+
+.insightMetric:last-child {
+  border-right: 0;
+}
+
+.insightMetric span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.insightMetric strong {
+  font-size: 1.1rem;
+}
+
+.workbenchColumns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(220px, 0.9fr);
+  gap: var(--space-3);
+}
+
+.reviewPanel,
+.outlinePanel,
+.safetyPanel,
+.snapshotItem {
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.checkList {
+  display: grid;
+  gap: 8px;
+  margin-top: var(--space-2);
+}
+
+.checkList li {
+  display: grid;
+  gap: 2px;
+  padding-left: 12px;
+  border-left: 3px solid var(--border);
+}
+
+.checkList li.ok {
+  border-left-color: var(--success);
+}
+
+.checkList li.warn {
+  border-left-color: var(--warning);
+}
+
+.checkList span,
+.outlineList,
+.snapshotItem span,
+.snapshotItem p {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.outlineList {
+  display: grid;
+  gap: 6px;
+  margin-top: var(--space-2);
+}
+
+.keywordRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.keywordChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+  font-size: 0.84rem;
+}
+
+.keywordChip small {
+  color: var(--muted);
+}
+
+.snapshotList {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.snapshotItem {
+  align-items: flex-start;
+}
+
+.snapshotItem div:first-child {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.snapshotItem p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 980px) {
+  .insightGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .workbenchColumns {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .workbenchHeader,
+  .goalPanel,
+  .safetyPanel,
+  .snapshotItem,
+  .goalControls,
+  .safetyActions,
+  .snapshotActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .qualityBadge,
+  .goalMeta {
+    width: 100%;
+  }
+
+  .goalMeta {
+    text-align: left;
+  }
+
+  .insightGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .insightMetric {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+/* Writing workbench mobile progress repair */
+@media (max-width: 680px) {
+  .progressTrack {
+    flex: none;
+    width: 100%;
+    height: 10px;
+  }
+}
+
+/* Rich markdown studio */
+.richEditorShell {
+  margin-bottom: var(--space-4);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow-sm);
+}
+
+.composerHeader,
+.studioCommandBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.composerHeader {
+  background: linear-gradient(180deg, var(--panel-soft), var(--panel));
+}
+
+.composerTitleGroup {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.composerEyebrow,
+.composerStatus {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.composerTitleGroup h2 {
+  font-size: 1.08rem;
+}
+
+.composerStatus,
+.snippetGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.composerStatus span:not(.statusChip) {
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+}
+
+.studioCommandBar {
+  align-items: flex-start;
+  background: var(--panel);
+}
+
+.snippetButton {
+  min-height: 34px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  background: var(--panel-soft);
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.snippetButton:hover {
+  border-color: rgba(23, 126, 114, 0.45);
+  background: rgba(23, 126, 114, 0.12);
+}
+
+.editorCanvas {
+  background: var(--panel);
+}
+
+.richEditorShell .EasyMDEContainer {
+  border: 0;
+  border-radius: 0;
+}
+
+.richEditorShell .editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel-soft);
+  opacity: 1;
+}
+
+.richEditorShell .editor-toolbar::before,
+.richEditorShell .editor-toolbar::after {
+  display: none;
+}
+
+.richEditorShell .editor-toolbar button {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--fg) !important;
+}
+
+.richEditorShell .editor-toolbar button:hover,
+.richEditorShell .editor-toolbar button.active {
+  border-color: rgba(23, 126, 114, 0.42);
+  background: rgba(23, 126, 114, 0.12);
+}
+
+.richEditorShell .editor-toolbar i.separator {
+  width: 1px;
+  height: 24px;
+  margin-inline: 4px;
+  border: 0;
+  background: var(--border);
+}
+
+.richEditorShell .EasyMDEContainer .CodeMirror {
+  min-height: 660px;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font-size: 1.06rem;
+  line-height: 1.82;
+}
+
+.richEditorShell .CodeMirror-scroll {
+  padding-block: 20px;
+  overflow-x: hidden !important;
+}
+
+.richEditorShell .CodeMirror-hscrollbar {
+  display: none !important;
+}
+
+.richEditorShell .CodeMirror-sizer,
+.richEditorShell .CodeMirror-line,
+.richEditorShell .CodeMirror-line-like {
+  max-width: 100%;
+}
+
+.richEditorShell .CodeMirror-lines {
+  padding: 0;
+}
+
+.richEditorShell .CodeMirror pre.CodeMirror-line,
+.richEditorShell .CodeMirror pre.CodeMirror-line-like {
+  padding-inline: 34px;
+}
+
+.richEditorShell .CodeMirror-cursor {
+  border-left-color: var(--primary);
+}
+
+.richEditorShell .editor-preview,
+.richEditorShell .editor-preview-side {
+  padding: 28px 34px;
+  background: var(--panel);
+  color: var(--fg);
+  line-height: 1.78;
+}
+
+.richEditorShell .editor-preview h1,
+.richEditorShell .editor-preview h2,
+.richEditorShell .editor-preview h3,
+.richEditorShell .editor-preview-side h1,
+.richEditorShell .editor-preview-side h2,
+.richEditorShell .editor-preview-side h3 {
+  margin-block: 1.1em 0.45em;
+}
+
+@media (max-width: 980px) {
+  .composerHeader,
+  .studioCommandBar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+}
+
+@media (max-width: 680px) {
+  .richEditorShell .EasyMDEContainer .CodeMirror {
+    min-height: 520px;
+  }
+
+  .richEditorShell .CodeMirror pre.CodeMirror-line,
+  .richEditorShell .CodeMirror pre.CodeMirror-line-like,
+  .richEditorShell .editor-preview,
+  .richEditorShell .editor-preview-side {
+    padding-inline: 18px;
+  }
+}
+
+/* Editor canvas polish */
+.editorCanvas {
+  padding: var(--space-4);
+  background: var(--panel-soft);
+}
+
+.richEditorShell .EasyMDEContainer {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.richEditorShell .EasyMDEContainer .CodeMirror {
+  min-height: 620px;
+  background:
+    linear-gradient(180deg, rgba(23, 126, 114, 0.035), transparent 180px),
+    var(--panel);
+}
+
+.richEditorShell .CodeMirror-placeholder {
+  color: var(--muted) !important;
+}
+
+.richEditorShell .CodeMirror-focused {
+  box-shadow: 0 0 0 2px rgba(23, 126, 114, 0.16);
+}
+
+@media (max-width: 680px) {
+  .editorCanvas {
+    padding: var(--space-3);
+  }
+
+  .richEditorShell .EasyMDEContainer .CodeMirror {
+    min-height: 500px;
+  }
+}
+
+/* Focus writing mode */
+.focusToggle {
+  min-height: 34px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  background: var(--panel-soft);
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.focusToggle:hover,
+.focusToggle[aria-pressed="true"] {
+  border-color: rgba(23, 126, 114, 0.45);
+  background: rgba(23, 126, 114, 0.12);
+}
+
+.snippetLabel {
+  align-self: center;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.richEditorShell.focusMode .studioCommandBar {
+  display: none;
+}
+
+.richEditorShell.focusMode .composerHeader {
+  border-bottom: 1px solid var(--border);
+}
+
+.richEditorShell.focusMode .editorCanvas {
+  padding: var(--space-4);
+}
+
+.richEditorShell.focusMode .EasyMDEContainer .CodeMirror {
+  min-height: min(74vh, 820px);
+}
+
+body.writingFocusActive .appHeader,
+body.writingFocusActive .statsPanel,
+body.writingFocusActive .draftPanel,
+body.writingFocusActive .shareBox,
+body.writingFocusActive .workbench,
+body.writingFocusActive .editorFooter {
+  display: none;
+}
+
+body.writingFocusActive .layout {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+body.writingFocusActive .editorPanel {
+  width: min(1180px, 100%);
+  margin-inline: auto;
+}
+
+body.writingFocusActive .editorHeader {
+  margin-bottom: var(--space-4);
+}
+
+@media (max-width: 680px) {
+  .richEditorShell.focusMode .editorCanvas {
+    padding: var(--space-3);
+  }
+
+  body.writingFocusActive .editorHeader {
+    display: none;
+  }
+}
+
+/* Usage-led writing desk */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #101314;
+    --fg: #f4f1e8;
+    --muted: #a6afa8;
+    --panel: #191d1e;
+    --panel-soft: #141819;
+    --border: #30383a;
+    --border-strong: #465154;
+    --primary: #68d0bd;
+    --primary-hover: #8be0d0;
+    --primary-fg: #071110;
+    --accent: #d7c48d;
+    --accent-soft: #2a261b;
+    --shadow-sm: 0 1px 0 rgba(255, 255, 255, 0.04), 0 14px 36px rgba(0, 0, 0, 0.18);
+  }
+}
+
+.container {
+  width: min(1680px, 100%);
+  padding: 18px clamp(16px, 2vw, 28px) 28px;
+}
+
+.appHeader {
+  grid-template-columns: minmax(260px, 0.8fr) minmax(420px, 1.2fr);
+  align-items: stretch;
+}
+
+.brandBlock,
+.accountPanel,
+.summaryStrip,
+.panel,
+.statsGrid {
+  box-shadow: none;
+}
+
+.brandBlock {
+  border-color: transparent;
+  background: transparent;
+  padding-inline: 0;
+}
+
+.brandMark {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #071110;
+}
+
+.brand {
+  font-size: 1.42rem;
+}
+
+.accountPanel {
+  border-color: var(--border);
+  background: color-mix(in srgb, var(--panel) 80%, transparent);
+}
+
+.statsPanel {
+  grid-template-columns: 1fr;
+}
+
+.summaryStrip {
+  display: grid;
+  grid-template-columns: auto auto auto minmax(220px, 1fr);
+  border-color: var(--border);
+  background: linear-gradient(180deg, var(--panel), var(--panel-soft));
+}
+
+.summaryPromise {
+  justify-self: end;
+  color: var(--fg);
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.statsGrid {
+  display: none;
+}
+
+.layout {
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+}
+
+.draftPanel,
+.editorPanel,
+.richEditorShell,
+.workbench,
+.shareBox,
+.exportPanel {
+  border-color: var(--border);
+}
+
+.panel {
+  background: var(--panel);
+}
+
+.editorPanel {
+  padding: 0;
+  overflow: hidden;
+}
+
+.editorHeader {
+  position: sticky;
+  top: 65px;
+  z-index: 12;
+  margin-bottom: 0;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  backdrop-filter: blur(14px);
+}
+
+.titleInput {
+  border-bottom: 0;
+  padding: 0;
+  font-size: clamp(1.55rem, 2.2vw, 2.25rem);
+}
+
+.editorWorkspaceGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  align-items: start;
+  gap: 0;
+}
+
+.writingColumn {
+  min-width: 0;
+  padding: 20px;
+}
+
+.writingRail {
+  position: sticky;
+  top: 145px;
+  display: grid;
+  gap: var(--space-3);
+  max-height: calc(100vh - 160px);
+  padding: 20px 20px 20px 0;
+  overflow: auto;
+}
+
+.richEditorShell {
+  margin-bottom: 0;
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.composerHeader {
+  padding: 12px 14px;
+  background: var(--panel);
+}
+
+.composerTitleGroup h2 {
+  font-size: 1rem;
+}
+
+.studioCommandBar {
+  padding: 10px 14px;
+  background: var(--panel-soft);
+}
+
+.editorCanvas {
+  padding: 0;
+  background: var(--panel);
+}
+
+.richEditorShell .EasyMDEContainer {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.richEditorShell .editor-toolbar {
+  padding: 9px 12px;
+  background: var(--panel);
+}
+
+.richEditorShell .EasyMDEContainer .CodeMirror {
+  min-height: calc(100vh - 300px);
+  background: var(--panel);
+  font-size: 1.08rem;
+  line-height: 1.86;
+}
+
+.richEditorShell .CodeMirror-scroll {
+  padding-block: 26px 34px;
+}
+
+.richEditorShell .CodeMirror pre.CodeMirror-line,
+.richEditorShell .CodeMirror pre.CodeMirror-line-like {
+  padding-inline: clamp(24px, 4vw, 58px);
+}
+
+.workbench {
+  margin-bottom: 0;
+  padding: 0;
+  gap: 0;
+  background: var(--panel);
+}
+
+.workbenchHeader,
+.goalPanel,
+.safetyPanel,
+.keywordRow,
+.workbenchColumns,
+.insightGrid,
+.snapshotList {
+  margin: 0;
+  border-radius: 0;
+}
+
+.workbenchHeader {
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.workbenchHeader p {
+  margin-top: 2px;
+}
+
+.qualityBadge {
+  min-width: 72px;
+  border-radius: var(--radius-sm);
+  background: var(--panel-soft);
+}
+
+.goalPanel {
+  display: grid;
+  padding: 14px;
+  border-width: 0 0 1px;
+  background: var(--panel);
+}
+
+.goalControls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+}
+
+.goalControls .input.compact {
+  width: 100%;
+  min-width: 0;
+}
+
+.progressTrack {
+  width: 100%;
+}
+
+.goalMeta {
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  text-align: left;
+}
+
+.insightGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-width: 0 0 1px;
+}
+
+.insightMetric {
+  min-height: 64px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.insightMetric:nth-child(2n) {
+  border-right: 0;
+}
+
+.workbenchColumns {
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.reviewPanel,
+.outlinePanel,
+.safetyPanel,
+.snapshotItem {
+  border-width: 0 0 1px;
+  border-radius: 0;
+  background: var(--panel);
+}
+
+.keywordRow {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.shareBox,
+.exportPanel {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.shareControls,
+.expiryControls,
+.exportGroup {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: stretch;
+}
+
+.shareControls .button,
+.expiryControls .button,
+.exportGroup .button,
+.exportPanel > .button,
+.writingRail .input.compact {
+  width: 100%;
+}
+
+body.writingFocusActive .writingRail {
+  display: none;
+}
+
+body.writingFocusActive .editorWorkspaceGrid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+body.writingFocusActive .writingColumn {
+  width: min(1080px, 100%);
+  margin-inline: auto;
+}
+
+@media (max-width: 1240px) {
+  .editorWorkspaceGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .writingRail {
+    position: static;
+    max-height: none;
+    padding: 0 20px 20px;
+  }
+}
+
+@media (max-width: 980px) {
+  .appHeader,
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .summaryStrip {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .summaryPromise {
+    justify-self: start;
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 680px) {
+  .container {
+    padding: 12px;
+  }
+
+  .editorHeader {
+    position: static;
+    padding: 14px;
+  }
+
+  .writingColumn,
+  .writingRail {
+    padding: 12px;
+  }
+
+  .summaryStrip,
+  .goalControls,
+  .insightGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .insightMetric,
+  .insightMetric:nth-child(2n) {
+    border-right: 0;
+  }
+}
+
+/* Usage-led layout fit fixes */
+@media (max-width: 1500px) {
+  .editorWorkspaceGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .writingRail {
+    position: static;
+    max-height: none;
+    padding: 0 20px 20px;
+  }
+
+  .workbench {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1340px) {
+  .authForm {
+    grid-template-columns: auto minmax(180px, 1fr) minmax(180px, 1fr);
+  }
+
+  .authForm .button.primary,
+  .authForm > .button:not(.primary) {
+    width: fit-content;
+  }
+}
+
+@media (max-width: 760px) {
+  .authForm {
+    grid-template-columns: 1fr;
+  }
+
+  .authForm .button.primary,
+  .authForm > .button:not(.primary) {
+    width: 100%;
+  }
+}
+
+/* Compact local auth state */
+.localModePanel {
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px;
+  border: 1px solid rgba(215, 196, 141, 0.32);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent-soft) 72%, transparent);
+}
+
+.localModePanel strong {
+  font-size: 0.92rem;
+}
+
+.localModePanel span {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+@media (min-width: 1341px) {
+  .accountPanel {
+    align-content: center;
+  }
+}
+
+/* Header compact breakpoint */
+@media (max-width: 980px) {
+  .appHeader {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile writing first */
+@media (max-width: 680px) {
+  .editorPanel {
+    order: -1;
+  }
+
+  .draftPanel {
+    order: 2;
+  }
+}
+
+/* Editor overlap repair */
+.editorHeader {
+  position: static;
+  top: auto;
+  z-index: auto;
+  backdrop-filter: none;
+}
+
+.editorWorkspaceGrid {
+  clear: both;
+}
+
+.writingColumn {
+  padding-top: 20px;
+}
+
+.richEditorShell {
+  position: relative;
+}
+
+@media (max-width: 680px) {
+  .writingColumn {
+    padding-top: 12px;
+  }
+}

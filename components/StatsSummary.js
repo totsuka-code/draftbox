@@ -11,6 +11,7 @@ export function StatsSummary({ t, charCount, draftsCount, content, stats }) {
         </span>
         <span className="summaryMeta">下書き {draftsCount} / {LIMITS.MAX_DRAFTS_PER_USER}</span>
         <span className="summaryMeta">本文 {byteLength(content)} / {LIMITS.MAX_CONTENT_BYTES} B</span>
+        <span className="summaryPromise">書く、数える、復元する。下書きを失わない執筆机。</span>
       </div>
 
       <div className="statsGrid">

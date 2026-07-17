@@ -2,6 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { humanTimeLeft } from "@/lib/time";
+import { WritingWorkbench } from "@/components/WritingWorkbench";
+import { RichMarkdownStudio } from "@/components/RichMarkdownStudio";
 
 const SimpleMDE = dynamic(() => import("react-simplemde-editor"), { ssr: false });
 
@@ -32,6 +34,13 @@ export function EditorPanel({
   statusLabel,
   saveNow,
   deleteCurrentDraft,
+  insights,
+  goalType,
+  setGoalType,
+  goalValue,
+  setGoalValue,
+  goalProgress,
+  localSafety,
 }) {
   return (
     <section className="panel editorPanel" aria-label="エディタ">
@@ -56,81 +65,106 @@ export function EditorPanel({
         </div>
       </div>
 
-      <div className="shareBox">
-        <div className="shareState">
-          <strong>{shareToken ? "共有リンク発行済み" : "共有リンク未発行"}</strong>
-          <span>
-            {shareToken && shareExpiresAt
-              ? `${new Date(shareExpiresAt).toLocaleString()}（${t("share.expiresIn", { time: humanTimeLeft(shareExpiresAt) })}）`
-              : shareToken
-                ? t("share.none")
-                : "必要になったら閲覧専用リンクを発行できます。"}
-          </span>
+      <div className="editorWorkspaceGrid">
+        <div className="writingColumn">
+          <RichMarkdownStudio
+            t={t}
+            content={content}
+            handleContent={handleContent}
+            insights={insights}
+            status={status}
+            statusLabel={statusLabel}
+            showToast={showToast}
+          >
+            <SimpleMDE value={content} onChange={handleContent} options={mdeOptions} />
+          </RichMarkdownStudio>
         </div>
 
-        <div className="shareControls">
-          {shareToken ? (
-            <>
-              <a className="button" href={shareURL} target="_blank" rel="noreferrer">{t("share.open")}</a>
-              <button className="button" onClick={async () => {
-                try {
-                  await navigator.clipboard?.writeText(shareURL);
-                  showToast(t("share.copy"));
-                } catch {
-                  showToast("コピーに失敗しました。共有リンクを手動で選択してください。");
-                }
-              }}>
-                {t("share.copy")}
-              </button>
-              <button className="button danger" onClick={revokeShare}>{t("share.revoke")}</button>
-            </>
-          ) : null}
-        </div>
+        <aside className="writingRail" aria-label="執筆アシスト">
+          <WritingWorkbench
+            t={t}
+            insights={insights}
+            goalType={goalType}
+            setGoalType={setGoalType}
+            goalValue={goalValue}
+            setGoalValue={setGoalValue}
+            goalProgress={goalProgress}
+            {...localSafety}
+          />
 
-        <div className="expiryControls">
-          <label>
-            <span>{t("share.expiry")}</span>
-            <select
-              className="input compact"
-              value={expiryMode}
-              onChange={(e) => setExpiryMode(e.target.value)}
-              aria-label={t("share.expiry")}
-            >
-              <option value="none">{t("share.options.none")}</option>
-              <option value="24h">{t("share.options.h24")}</option>
-              <option value="7d">{t("share.options.d7")}</option>
-              <option value="custom">{t("share.options.custom")}</option>
-            </select>
-          </label>
-          {expiryMode === "custom" && (
-            <input
-              className="input compact"
-              type="datetime-local"
-              value={expiryCustom}
-              onChange={(e) => setExpiryCustom(e.target.value)}
-              aria-label={t("share.options.custom")}
-            />
-          )}
-          {shareToken ? (
-            <button className="button" onClick={updateExpiry} disabled={!user || !currentId}>{t("share.update")}</button>
-          ) : (
-            <button className="button" onClick={createShare} disabled={!user || !currentId}>{t("share.issue")}</button>
-          )}
-        </div>
-      </div>
+          <section className="shareBox">
+            <div className="shareState">
+              <strong>{shareToken ? "共有リンク発行済み" : "共有リンク未発行"}</strong>
+              <span>
+                {shareToken && shareExpiresAt
+                  ? `${new Date(shareExpiresAt).toLocaleString()}（${t("share.expiresIn", { time: humanTimeLeft(shareExpiresAt) })}）`
+                  : shareToken
+                    ? t("share.none")
+                    : "完成したら閲覧専用リンクを発行できます。"}
+              </span>
+            </div>
 
-      <SimpleMDE value={content} onChange={handleContent} options={mdeOptions} />
+            <div className="expiryControls">
+              <label>
+                <span>{t("share.expiry")}</span>
+                <select
+                  className="input compact"
+                  value={expiryMode}
+                  onChange={(e) => setExpiryMode(e.target.value)}
+                  aria-label={t("share.expiry")}
+                >
+                  <option value="none">{t("share.options.none")}</option>
+                  <option value="24h">{t("share.options.h24")}</option>
+                  <option value="7d">{t("share.options.d7")}</option>
+                  <option value="custom">{t("share.options.custom")}</option>
+                </select>
+              </label>
+              {expiryMode === "custom" && (
+                <input
+                  className="input compact"
+                  type="datetime-local"
+                  value={expiryCustom}
+                  onChange={(e) => setExpiryCustom(e.target.value)}
+                  aria-label={t("share.options.custom")}
+                />
+              )}
+              {shareToken ? (
+                <button className="button" onClick={updateExpiry} disabled={!user || !currentId}>{t("share.update")}</button>
+              ) : (
+                <button className="button" onClick={createShare} disabled={!user || !currentId}>{t("share.issue")}</button>
+              )}
+            </div>
 
-      <div className="editorFooter">
-        <div className="exportGroup">
-          <span className="kicker">エクスポート</span>
-          <button className="button" onClick={exportMD}>{t("export.md")}</button>
-          <button className="button" onClick={exportHTML}>{t("export.html")}</button>
-          <button className="button" onClick={exportTXT}>{t("export.txt")}</button>
-        </div>
-        {user && currentId ? (
-          <button className="button danger" onClick={deleteCurrentDraft}>{t("actions.deleteThisDraft")}</button>
-        ) : null}
+            {shareToken ? (
+              <div className="shareControls">
+                <a className="button" href={shareURL} target="_blank" rel="noreferrer">{t("share.open")}</a>
+                <button className="button" onClick={async () => {
+                  try {
+                    await navigator.clipboard?.writeText(shareURL);
+                    showToast(t("share.copy"));
+                  } catch {
+                    showToast("コピーに失敗しました。共有リンクを手動で選択してください。");
+                  }
+                }}>
+                  {t("share.copy")}
+                </button>
+                <button className="button danger" onClick={revokeShare}>{t("share.revoke")}</button>
+              </div>
+            ) : null}
+          </section>
+
+          <section className="exportPanel">
+            <span className="kicker">エクスポート</span>
+            <div className="exportGroup">
+              <button className="button" onClick={exportMD}>{t("export.md")}</button>
+              <button className="button" onClick={exportHTML}>{t("export.html")}</button>
+              <button className="button" onClick={exportTXT}>{t("export.txt")}</button>
+            </div>
+            {user && currentId ? (
+              <button className="button danger" onClick={deleteCurrentDraft}>{t("actions.deleteThisDraft")}</button>
+            ) : null}
+          </section>
+        </aside>
       </div>
     </section>
   );

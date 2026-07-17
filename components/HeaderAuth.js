@@ -11,6 +11,7 @@ export function HeaderAuth({
   password,
   setPassword,
   handleAuth,
+  authDisabled = false,
   showReset,
   setShowReset,
   resetEmail,
@@ -41,6 +42,11 @@ export function HeaderAuth({
             <span className="userPill">{user.email}</span>
             <button className="button" onClick={signOut}>{t("logout")}</button>
           </div>
+        ) : authDisabled ? (
+          <div className="localModePanel">
+            <strong>{t("localMode.title")}</strong>
+            <span>{t("localMode.body")}</span>
+          </div>
         ) : (
           <>
             <form onSubmit={handleAuth} className="authForm">
@@ -63,17 +69,16 @@ export function HeaderAuth({
                 </button>
               </div>
               <input className="input" type="email" required placeholder={t("email")}
-                value={email} onChange={(e) => setEmail(e.target.value)} />
+                value={email} onChange={(e) => setEmail(e.target.value)} disabled={authDisabled} />
               <input className="input" type="password" required placeholder={t("password")}
-                value={password} onChange={(e) => setPassword(e.target.value)} />
-              <button className="button primary" type="submit">
+                value={password} onChange={(e) => setPassword(e.target.value)} disabled={authDisabled} />
+              <button className="button primary" type="submit" disabled={authDisabled}>
                 {authMode === "signin" ? t("login") : t("register")}
               </button>
               <button type="button" className="button ghost" onClick={() => setShowReset((value) => !value)}>
                 {t("forgot")}
               </button>
             </form>
-
             {showReset && (
               <form onSubmit={sendReset} className="resetForm">
                 <input className="input" type="email" required placeholder={t("email")}

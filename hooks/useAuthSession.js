@@ -5,6 +5,7 @@ export function useAuthSession() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
+    if (!supabase) return;
     let mounted = true;
     supabase.auth.getUser().then(({ data }) => {
       if (!mounted) return;
