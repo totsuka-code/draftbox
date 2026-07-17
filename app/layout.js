@@ -11,9 +11,10 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 
 export const metadata = { title: "DraftBox", description: "Lightweight markdown drafts" };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
   // Cookieの i18n_lang を取得（なければ ja）
-  const langCookie = cookies().get("i18n_lang")?.value;
+  const cookieStore = await cookies();
+  const langCookie = cookieStore.get("i18n_lang")?.value;
   const initialLang = langCookie === "en" ? "en" : "ja";
 
   return (

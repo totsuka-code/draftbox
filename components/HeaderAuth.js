@@ -18,28 +18,32 @@ export function HeaderAuth({
   sendReset,
 }) {
   return (
-    <header className="header">
-      <div>
-        <div className="brand">{t("brand")}</div>
-        <div className="kicker">{t("tagline")}</div>
+    <header className="appHeader">
+      <div className="brandBlock">
+        <div className="brandMark">D</div>
+        <div>
+          <div className="brand">{t("brand")}</div>
+          <div className="kicker">{t("tagline")}</div>
+        </div>
       </div>
-      <div>
-        <div className="toolbar" style={{ justifyContent: "flex-end", marginBottom: 6 }}>
-          <label className="kicker" htmlFor="lang" style={{ marginRight: 4 }}>{t("language")}</label>
-          <select id="lang" className="input" value={lang} onChange={(e) => setLang(e.target.value)} aria-label={t("language")}>
+
+      <div className="accountPanel">
+        <div className="languageRow">
+          <label className="kicker" htmlFor="lang">{t("language")}</label>
+          <select id="lang" className="input compact" value={lang} onChange={(e) => setLang(e.target.value)} aria-label={t("language")}>
             <option value="ja">日本語</option>
             <option value="en">English</option>
           </select>
         </div>
 
         {user ? (
-          <div className="toolbar" style={{ justifyContent: "flex-end" }}>
-            <span className="kicker">{user.email}</span>
+          <div className="signedInRow">
+            <span className="userPill">{user.email}</span>
             <button className="button" onClick={signOut}>{t("logout")}</button>
           </div>
         ) : (
           <>
-            <form onSubmit={handleAuth} className="toolbar" style={{ justifyContent: "flex-end" }}>
+            <form onSubmit={handleAuth} className="authForm">
               <div className="formTabs">
                 <button
                   type="button"
@@ -71,7 +75,7 @@ export function HeaderAuth({
             </form>
 
             {showReset && (
-              <form onSubmit={sendReset} className="toolbar" style={{ justifyContent: "flex-end", marginTop: 6 }}>
+              <form onSubmit={sendReset} className="resetForm">
                 <input className="input" type="email" required placeholder={t("email")}
                   value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} />
                 <button className="button" type="submit">{t("send")}</button>
