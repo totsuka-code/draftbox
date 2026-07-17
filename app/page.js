@@ -2,7 +2,7 @@
 
 "use client";
 import { useMemo, useState, useCallback } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { isSupabaseConfigured, supabase } from "@/lib/supabaseClient";
 import { useI18n } from "@/lib/i18n";
 import { filterAndSortDrafts } from "@/lib/draftFilters";
 import { getMarkdownEditorOptions } from "@/lib/editorOptions";
@@ -74,6 +74,10 @@ export default function Page() {
 
   const handleAuth = useCallback(async (event) => {
     event.preventDefault();
+    if (!supabase) {
+      showToast("Supabase の環境変数が未設定です。.env.local を設定してください。");
+      return;
+    }
     if (authMode === "signin") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return showToast(`ログインに失敗しました: ${error.message}`);
@@ -87,6 +91,7 @@ export default function Page() {
   }, [authMode, email, password, showToast]);
 
   const signOut = useCallback(async () => {
+    if (!supabase) return;
     await supabase.auth.signOut();
     resetDrafts();
     resetShare();
@@ -95,6 +100,10 @@ export default function Page() {
 
   const sendReset = useCallback(async (event) => {
     event.preventDefault();
+    if (!supabase) {
+      showToast("Supabase の環境変数が未設定です。.env.local を設定してください。");
+      return;
+    }
     const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
       redirectTo: `${baseUrl}/auth/reset`,
     });
@@ -142,6 +151,7 @@ export default function Page() {
         password={password}
         setPassword={setPassword}
         handleAuth={handleAuth}
+        authDisabled={!isSupabaseConfigured}
         showReset={showReset}
         setShowReset={setShowReset}
         resetEmail={resetEmail}

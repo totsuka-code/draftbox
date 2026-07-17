@@ -11,6 +11,7 @@ export function HeaderAuth({
   password,
   setPassword,
   handleAuth,
+  authDisabled = false,
   showReset,
   setShowReset,
   resetEmail,
@@ -63,16 +64,17 @@ export function HeaderAuth({
                 </button>
               </div>
               <input className="input" type="email" required placeholder={t("email")}
-                value={email} onChange={(e) => setEmail(e.target.value)} />
+                value={email} onChange={(e) => setEmail(e.target.value)} disabled={authDisabled} />
               <input className="input" type="password" required placeholder={t("password")}
-                value={password} onChange={(e) => setPassword(e.target.value)} />
-              <button className="button primary" type="submit">
+                value={password} onChange={(e) => setPassword(e.target.value)} disabled={authDisabled} />
+              <button className="button primary" type="submit" disabled={authDisabled}>
                 {authMode === "signin" ? t("login") : t("register")}
               </button>
               <button type="button" className="button ghost" onClick={() => setShowReset((value) => !value)}>
                 {t("forgot")}
               </button>
             </form>
+            {authDisabled && <div className="configNotice">Supabase 未設定のため、保存とログインは無効です。</div>}
 
             {showReset && (
               <form onSubmit={sendReset} className="resetForm">
