@@ -1,100 +1,79 @@
 // app/page.js (draftbox)
 
 "use client";
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useI18n } from "@/lib/i18n";
-import { LIMITS, byteLength, validateDraft } from "@/lib/policy";
-import { countGraphemes, getTextStats, stripMarkdown } from "@/lib/textMetrics";
 import { filterAndSortDrafts } from "@/lib/draftFilters";
 import { getMarkdownEditorOptions } from "@/lib/editorOptions";
-import { computeExpiresISO, toDatetimeLocalString } from "@/lib/time";
 import { exportHtmlDraft, exportMarkdownDraft, exportTextDraft } from "@/lib/draftExport";
-import { debounce } from "@/lib/debounce";
-import { createDraft as createDraftRecord, deleteDraft, listDrafts, updateDraft } from "@/lib/draftRepository";
-import { deleteDraftShare, getDraftShare, saveDraftShare, updateDraftShareExpiry } from "@/lib/shareRepository";
 import { DraftListPanel } from "@/components/DraftListPanel";
 import { EditorPanel } from "@/components/EditorPanel";
 import { HeaderAuth } from "@/components/HeaderAuth";
 import { StatsSummary } from "@/components/StatsSummary";
+import { useAuthSession } from "@/hooks/useAuthSession";
+import { useDraftEditor } from "@/hooks/useDraftEditor";
+import { useDraftShare } from "@/hooks/useDraftShare";
+import { useToast } from "@/hooks/useToast";
 
-
-/* ===================================================================
- * メインコンポーネント
- * =================================================================== */
 export default function Page() {
   const { lang, setLang, t } = useI18n();
+  const user = useAuthSession();
+  const { toast, showToast } = useToast();
 
-  // 認証周り
-  const [user, setUser] = useState(null);
   const [authMode, setAuthMode] = useState("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showReset, setShowReset] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
 
-  // 下書き状態
-  const [drafts, setDrafts] = useState([]);
-  const [draftsCount, setDraftsCount] = useState(0);
-  const [currentId, setCurrentId] = useState(null);
-
-  // エディタ
-  const [title, setTitle] = useState(t("title"));
-  const [content, setContent] = useState("");
-
-  // 通知/保存状態
-  const [status, setStatus] = useState("idle"); // idle|saving|saved|error
-  const [toast, setToast] = useState("");
-
-  // 共有
-  const [shareToken, setShareToken] = useState(null);
-  const BASE_URL =
-    process.env.NEXT_PUBLIC_BASE_URL ??
-    (typeof window !== "undefined" ? window.location.origin : "");
-  const [shareExpiresAt, setShareExpiresAt] = useState(null);
-  const [expiryMode, setExpiryMode] = useState("none"); // none|24h|7d|custom
-  const [expiryCustom, setExpiryCustom] = useState("");
-
-  // 検索/フィルタ/並び替え
   const [q, setQ] = useState("");
-  const [dateFrom, setDateFrom] = useState(""); // YYYY-MM-DD
+  const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [minChars, setMinChars] = useState("");
   const [maxChars, setMaxChars] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  const [sortField, setSortField] = useState("updated"); // 'updated'|'title'|'chars'
-  const [sortDir, setSortDir] = useState("desc"); // 'asc'|'desc'
+  const [sortField, setSortField] = useState("updated");
+  const [sortDir, setSortDir] = useState("desc");
 
-  // バッジ用の素文字数
-  const plain = useMemo(() => stripMarkdown(content), [content]);
-  const charCount = useMemo(() => countGraphemes(plain), [plain]);
+  const {
+    drafts,
+    draftsCount,
+    currentId,
+    title,
+    content,
+    status,
+    charCount,
+    stats,
+    resetDrafts,
+    selectDraft,
+    createDraft,
+    deleteCurrentDraft,
+    handleTitle,
+    handleContent,
+    saveNow,
+  } = useDraftEditor({ user, t, showToast });
 
-  // 詳細統計
-  const stats = useMemo(() => getTextStats(plain), [plain]);
+  const {
+    shareToken,
+    shareExpiresAt,
+    expiryMode,
+    setExpiryMode,
+    expiryCustom,
+    setExpiryCustom,
+    shareURL,
+    resetShare,
+    createShare,
+    updateExpiry,
+    revokeShare,
+  } = useDraftShare({ user, currentId, showToast });
 
-  // 認証監視（初期化時に現在ユーザーを取得し、state変更を購読）
-  useEffect(() => {
-    let mounted = true;
-    supabase.auth.getUser().then(({ data }) => {
-      if (!mounted) return;
-      setUser(data.user ?? null);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setUser(s?.user ?? null));
-    return () => {
-      mounted = false;
-      sub.subscription.unsubscribe();
-    };
-  }, []);
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL ??
+    (typeof window !== "undefined" ? window.location.origin : "");
 
-  const showToast = useCallback((m) => {
-    setToast(m);
-    const id = window.setTimeout(() => setToast(""), 2600);
-    return () => window.clearTimeout(id);
-  }, []);
-
-  // ログイン/登録
-  const handleAuth = useCallback(async (e) => {
-    e.preventDefault();
+  const handleAuth = useCallback(async (event) => {
+    event.preventDefault();
     if (authMode === "signin") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return showToast(`ログインに失敗しました: ${error.message}`);
@@ -109,234 +88,19 @@ export default function Page() {
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
-    setDrafts([]); setDraftsCount(0); setCurrentId(null);
-    setTitle(t("title")); setContent(""); setShareToken(null);
+    resetDrafts();
+    resetShare();
     showToast("サインアウトしました。");
-  }, [t, showToast]);
+  }, [resetDrafts, resetShare, showToast]);
 
-  // パスワード再設定メール
-  const sendReset = useCallback(async (e) => {
-    e.preventDefault();
+  const sendReset = useCallback(async (event) => {
+    event.preventDefault();
     const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-      redirectTo: `${BASE_URL}/auth/reset`,
+      redirectTo: `${baseUrl}/auth/reset`,
     });
     showToast(error ? `再設定メールの送信に失敗しました: ${error.message}` : "再設定用メールを送信しました。");
-  }, [resetEmail, BASE_URL, showToast]);
+  }, [resetEmail, baseUrl, showToast]);
 
-  // 一覧取得
-  const loadDrafts = useCallback(async () => {
-    if (!user) return;
-    const { data, count, error } = await listDrafts();
-    if (error) return showToast(`下書きの読み込みに失敗しました: ${error.message}`);
-    setDrafts(data || []);
-    setDraftsCount(typeof count === "number" ? count : data?.length || 0);
-    if (data?.length) {
-      const d = data[0];
-      setCurrentId(d.id);
-      setTitle(d.title || t("title"));
-      setContent(d.content || "");
-    } else {
-      setCurrentId(null);
-      setTitle(t("title"));
-      setContent("");
-      setShareToken(null);
-    }
-  }, [user, t, showToast]);
-
-  useEffect(() => { loadDrafts(); }, [loadDrafts]);
-
-  // 共有設定取得
-  const fetchShare = useCallback(async (draftId) => {
-    if (!user || !draftId) { setShareToken(null); setShareExpiresAt(null); return; }
-    const { data, error } = await getDraftShare(draftId);
-    if (error) { setShareToken(null); setShareExpiresAt(null); return; }
-    setShareToken(data?.token || null);
-    setShareExpiresAt(data?.expires_at || null);
-    if (!data?.expires_at) { setExpiryMode("none"); setExpiryCustom(""); }
-    else { setExpiryMode("custom"); setExpiryCustom(toDatetimeLocalString(data.expires_at)); }
-  }, [user]);
-
-  useEffect(() => { fetchShare(currentId); }, [currentId, fetchShare]);
-
-  // -------- 保存関連 --------
-  const debouncedSaveRef = useRef((id, patch) => {});
-  const lastSaveIdRef = useRef(0); // 競合回避用の単純なID
-
-  useEffect(() => {
-    const doSave = async (id, patch) => {
-      if (!user || !id) return;
-      setStatus("saving");
-      const thisSaveId = ++lastSaveIdRef.current;
-      const { error } = await updateDraft(id, patch);
-      // 後から来た保存が完了している可能性もあるため、最後のもののみ反映
-      if (thisSaveId !== lastSaveIdRef.current) return;
-      if (error) { setStatus("error"); showToast(`保存に失敗しました: ${error.message}`); }
-      else { setStatus("saved"); window.setTimeout(() => setStatus("idle"), 1200); }
-    };
-    const debounced = debounce(doSave, 700);
-    debouncedSaveRef.current = debounced;
-    return () => debounced.cancel();
-  }, [user, showToast]);
-
-  // 空なら自動作成して保存
-  const ensureDraftAndMaybeSave = useCallback(async (patch = {}) => {
-    if (!user) return null;
-    if (currentId) {
-      const id = currentId;
-      setDrafts((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)));
-      debouncedSaveRef.current(id, patch);
-      return id;
-    }
-    setStatus("saving");
-    const initialTitle = patch.title ?? title ?? t("title");
-    const initialContent = patch.content ?? content ?? "";
-    const err = validateDraft({ title: initialTitle, content: initialContent, count: draftsCount });
-    if (err) { setStatus("error"); showToast(err); return null; }
-    const { data, error } = await createDraftRecord({
-      userId: user.id,
-      title: initialTitle,
-      content: initialContent,
-    });
-    if (error) { setStatus("error"); showToast(`下書きの作成に失敗しました: ${error.message}`); return null; }
-    setDrafts((p) => [data, ...p]); setDraftsCount((n) => n + 1);
-    setCurrentId(data.id); setTitle(data.title); setContent(data.content);
-    setStatus("saved"); window.setTimeout(() => setStatus("idle"), 1200);
-    return data.id;
-  }, [user, currentId, title, content, draftsCount, t, showToast]);
-
-  // 編集ハンドラ
-  const handleTitle = useCallback((v) => {
-    if (v.length > LIMITS.MAX_TITLE_CHARS) {
-      setTitle(v.slice(0, LIMITS.MAX_TITLE_CHARS));
-      setStatus("error"); return showToast(`タイトルは${LIMITS.MAX_TITLE_CHARS}文字以内でご入力ください。`);
-    }
-    setTitle(v);
-    if (!user) return;
-    if (!currentId) ensureDraftAndMaybeSave({ title: v });
-    else {
-      setDrafts((prev) => prev.map((d) => (d.id === currentId ? { ...d, title: v } : d)));
-      debouncedSaveRef.current(currentId, { title: v });
-    }
-  }, [user, currentId, ensureDraftAndMaybeSave, showToast]);
-
-  const handleContent = useCallback((v) => {
-    if (byteLength(v) > LIMITS.MAX_CONTENT_BYTES) {
-      setStatus("error"); return showToast(`本文が上限（${LIMITS.MAX_CONTENT_BYTES}B）を超えました。`);
-    }
-    setContent(v);
-    if (!user) return;
-    if (!currentId) ensureDraftAndMaybeSave({ content: v });
-    else {
-      setDrafts((prev) => prev.map((d) => (d.id === currentId ? { ...d, content: v } : d)));
-      debouncedSaveRef.current(currentId, { content: v });
-    }
-  }, [user, currentId, ensureDraftAndMaybeSave, showToast]);
-
-  // 手動保存＋ショートカット
-  const saveNow = useCallback(async () => {
-    if (!user) return showToast("保存するにはサインインが必要です。");
-    const err = validateDraft({ title, content, count: draftsCount });
-    if (err) { setStatus("error"); return showToast(err); }
-    setStatus("saving");
-    let id = currentId;
-    if (!id) { id = await ensureDraftAndMaybeSave({}); if (!id) return; }
-    const { error } = await updateDraft(id, { title, content });
-    if (error) { setStatus("error"); showToast(`保存に失敗しました: ${error.message}`); }
-    else { setStatus("saved"); window.setTimeout(() => setStatus("idle"), 1200); }
-  }, [user, currentId, title, content, draftsCount, ensureDraftAndMaybeSave, showToast]);
-
-  useEffect(() => {
-    const onKey = (e) => {
-      // Windows/Linux: Ctrl+S, macOS: ⌘S
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
-        e.preventDefault();
-        // 非同期だが例外を握りつぶさない
-        void saveNow();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [saveNow]);
-
-  // 共有：発行/更新/解除
-  const createShare = useCallback(async () => {
-    if (!user || !currentId) return showToast("共有対象の下書きがありません。");
-    const expires_at = computeExpiresISO(expiryMode, expiryCustom);
-    const { data, error } = await saveDraftShare({
-      draftId: currentId,
-      userId: user.id,
-      expiresAt: expires_at,
-    });
-    if (error) return showToast(`共有リンクの作成に失敗しました: ${error.message}`);
-    setShareToken(data.token); setShareExpiresAt(data.expires_at || null);
-    showToast("共有リンクを発行しました。");
-  }, [user, currentId, expiryMode, expiryCustom, showToast]);
-
-  const updateExpiry = useCallback(async () => {
-    if (!user || !currentId || !shareToken) return;
-    const expires_at = computeExpiresISO(expiryMode, expiryCustom);
-    const { error } = await updateDraftShareExpiry(currentId, expires_at);
-    if (error) return showToast(`有効期限の更新に失敗しました: ${error.message}`);
-    setShareExpiresAt(expires_at || null);
-    showToast(expires_at ? "有効期限を更新しました。" : "有効期限を解除しました。");
-  }, [user, currentId, shareToken, expiryMode, expiryCustom, showToast]);
-
-  const revokeShare = useCallback(async () => {
-    if (!user || !currentId) return;
-    const { error } = await deleteDraftShare(currentId);
-    if (error) return showToast(`共有リンクの無効化に失敗しました: ${error.message}`);
-    setShareToken(null); showToast("共有リンクを無効化しました。");
-  }, [user, currentId, showToast]);
-
-  const shareURL = shareToken ? `${BASE_URL}/s/${shareToken}` : "";
-
-  // エクスポート
-  const exportMD = useCallback(() => exportMarkdownDraft({ title, content }), [title, content]);
-  const exportTXT = useCallback(() => exportTextDraft({ title, content }), [title, content]);
-  const exportHTML = useCallback(() => exportHtmlDraft({ title, content, lang }), [content, title, lang]);
-
-  const selectDraft = useCallback((draft) => {
-    setCurrentId(draft.id);
-    setTitle(draft.title || t("title"));
-    setContent(draft.content || "");
-  }, [t]);
-
-  const createDraft = useCallback(async () => {
-    if (!user) return showToast("保存にはサインインが必要です。");
-    const err = validateDraft({ title, content, count: draftsCount });
-    if (err) return showToast(err);
-    const { data, error } = await createDraftRecord({
-      userId: user.id,
-      title: t("title"),
-      content: "",
-    });
-    if (error) return showToast(`下書きの作成に失敗しました: ${error.message}`);
-    setDrafts((prev) => [data, ...prev]);
-    setDraftsCount((count) => count + 1);
-    selectDraft(data);
-    setShareToken(null);
-    showToast("新しい下書きを作成しました。");
-  }, [user, title, content, draftsCount, t, showToast, selectDraft]);
-
-  const deleteCurrentDraft = useCallback(async () => {
-    if (!user || !currentId) return;
-    if (!confirm(t("actions.confirmDelete"))) return;
-    const { error } = await deleteDraft(currentId);
-    if (error) return showToast(`削除に失敗しました: ${error.message}`);
-    const next = drafts.find((draft) => draft.id !== currentId);
-    setDrafts((prev) => prev.filter((draft) => draft.id !== currentId));
-    setDraftsCount((count) => Math.max(0, count - 1));
-    if (next) selectDraft(next);
-    else {
-      setCurrentId(null);
-      setTitle(t("title"));
-      setContent("");
-    }
-    setShareToken(null);
-    showToast("削除しました。");
-  }, [user, currentId, drafts, t, showToast, selectDraft]);
-
-  // 検索・フィルタ・並び替え
   const filteredDrafts = useMemo(
     () =>
       filterAndSortDrafts({
@@ -354,14 +118,15 @@ export default function Page() {
 
   const mdeOptions = useMemo(() => getMarkdownEditorOptions(t), [t]);
 
+  const exportMD = useCallback(() => exportMarkdownDraft({ title, content }), [title, content]);
+  const exportTXT = useCallback(() => exportTextDraft({ title, content }), [title, content]);
+  const exportHTML = useCallback(() => exportHtmlDraft({ title, content, lang }), [content, title, lang]);
+
   const statusLabel =
     status === "saving" ? t("status.saving") :
-    status === "saved"  ? t("status.saved")  :
-    status === "error"  ? t("status.error")  : "　";
+    status === "saved" ? t("status.saved") :
+    status === "error" ? t("status.error") : "　";
 
-  // ===================================================================
-  // ▼ UIレンダリング
-  // ===================================================================
   return (
     <div className="container">
       <HeaderAuth
@@ -453,6 +218,4 @@ export default function Page() {
       {toast && <div className="toast" role="status" aria-live="polite">{toast}</div>}
     </div>
   );
-
 }
-
