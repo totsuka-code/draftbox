@@ -6,141 +6,13 @@ import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabaseClient";
 import { useI18n } from "@/lib/i18n";
 import { LIMITS, byteLength, validateDraft } from "@/lib/policy";
-import { marked } from "marked";
-import DOMPurify from "dompurify";
+import { countGraphemes, getTextStats, stripMarkdown } from "@/lib/textMetrics";
+import { computeExpiresISO, humanTimeLeft, toDatetimeLocalString } from "@/lib/time";
+import { exportHtmlDraft, exportMarkdownDraft, exportTextDraft } from "@/lib/draftExport";
+import { debounce } from "@/lib/debounce";
+import { Stat } from "@/components/Stat";
 
 const SimpleMDE = dynamic(() => import("react-simplemde-editor"), { ssr: false });
-
-/* ===================================================================
- * ユーティリティ群
- *  - アプリ本体に依存しない純粋関数のみを配置
- * =================================================================== */
-
-/**
- * 文字の「見た目上の数」(grapheme)を数える。
- * Intl.Segmenter が利用可能であれば正確に（絵文字・結合文字対応）。
- * @param {string} text
- * @returns {number}
- */
-function countGraphemes(text) {
-  if (typeof Intl !== "undefined" && Intl.Segmenter) {
-    const seg = new Intl.Segmenter("ja", { granularity: "grapheme" });
-    let c = 0;
-    for (const _ of seg.segment(text || "")) c++;
-    return c;
-  }
-  return Array.from(text || "").length;
-}
-
-/**
- * Markdownを概算でプレーンテキスト化する。
- * - コードフェンス/インラインコード/リンク/画像/装飾記号を除去。
- * @param {string} md
- * @returns {string}
- */
-function stripMarkdown(md) {
-  let t = md ?? "";
-  t = t.replace(/```[\s\S]*?```/g, ""); // fenced code
-  t = t.replace(/`[^`]*`/g, ""); // inline code
-  t = t.replace(/!\[(.*?)\]\((.*?)\)/g, "$1"); // image alt
-  t = t.replace(/\[(.*?)\]\((.*?)\)/g, "$1"); // link text
-  t = t.replace(/[*_~`>#-]{1,}/g, " "); // emphasis/heading/list marks
-  return t;
-}
-
-/** SJISの概算バイト長（簡易規則） */
-function bytesSJIS(text) {
-  let n = 0;
-  for (const ch of text || "") {
-    const cp = ch.codePointAt(0);
-    if (cp <= 0x7f) n += 1;
-    else if (cp >= 0xff61 && cp <= 0xff9f) n += 1; // 半角カナ
-    else n += 2;
-  }
-  return n;
-}
-/** EUC-JPの概算バイト長（簡易規則） */
-function bytesEUCJP(text) {
-  let n = 0;
-  for (const ch of text || "") {
-    const cp = ch.codePointAt(0);
-    if (cp <= 0x7f) n += 1;
-    else n += 2;
-  }
-  return n;
-}
-/** ISO-2022-JP(JIS)の概算バイト長（簡易規則） */
-function bytesJIS(text) {
-  let n = 0;
-  for (const ch of text || "") {
-    const cp = ch.codePointAt(0);
-    if (cp <= 0x7f) n += 1;
-    else n += 2; // 概算
-  }
-  return n;
-}
-
-/** 改行数（CR除去のうえLFでカウント） */
-function lineCount(text) {
-  if (!text) return 0;
-  return text.replace(/\r/g, "").split("\n").length;
-}
-
-/**
- * debounceユーティリティ。
- * - wait後に最新引数で一度だけ実行
- * - .cancel()でタイマー解除可能
- */
-function debounce(fn, wait) {
-  let t;
-  const debounced = (...a) => {
-    window.clearTimeout(t);
-    t = window.setTimeout(() => fn(...a), wait);
-  };
-  debounced.cancel = () => window.clearTimeout(t);
-  return debounced;
-}
-
-/**
- * `YYYY-MM-DDTHH:mm` (input[type=datetime-local]) をローカル→ISO文字列化
- */
-function toISOFromDatetimeLocal(localStr) {
-  if (!localStr) return null;
-  return new Date(localStr).toISOString();
-}
-
-/**
- * ISO日時から human readable な残り時間を作成。
- * @param {string|null} iso
- * @param {string} [lang]
- */
-function humanTimeLeft(
-  iso,
-  lang = typeof navigator !== "undefined" ? navigator.language || "ja" : "ja"
-) {
-  if (!iso) return lang.startsWith("en") ? "No expiry" : "期限なし";
-  const ms = new Date(iso) - new Date();
-  if (ms <= 0) return lang.startsWith("en") ? "Expired" : "期限切れ";
-  const d = Math.floor(ms / 86400000);
-  const h = Math.floor((ms % 86400000) / 3600000);
-  const m = Math.floor((ms % 3600000) / 60000);
-  if (lang.startsWith("en")) {
-    if (d > 0) return `${d}d ${h}h ${m}m`;
-    if (h > 0) return `${h}h ${m}m`;
-    return `${m}m`;
-  } else {
-    if (d > 0) return `${d}日${h}時間${m}分`;
-    if (h > 0) return `${h}時間${m}分`;
-    return `${m}分`;
-  }
-}
-
-/** ファイル名に利用できない文字を安全化（最大100文字） */
-function safeFilename(str) {
-  const base = (str || "untitled").trim();
-  const sanitized = base.replace(/[\\\/:*?"<>|]/g, "_");
-  return sanitized.slice(0, 100);
-}
 
 /* ===================================================================
  * メインコンポーネント
@@ -193,24 +65,7 @@ export default function Page() {
   const charCount = useMemo(() => countGraphemes(plain), [plain]);
 
   // 詳細統計
-  const stats = useMemo(() => {
-    const noNL = plain.replace(/\r?\n/g, "");
-    const noNLSpace = noNL.replace(/[ \t\u3000]/g, "");
-    const utf8 = new TextEncoder().encode(plain).length;
-    const utf16 = plain.length * 2;
-    return {
-      chars: countGraphemes(plain),
-      charsNoNL: countGraphemes(noNL),
-      charsNoNLSpace: countGraphemes(noNLSpace),
-      bytesUTF8: utf8,
-      bytesUTF16: utf16,
-      bytesSJIS: bytesSJIS(plain),
-      bytesEUCJP: bytesEUCJP(plain),
-      bytesJIS: bytesJIS(plain),
-      lines: lineCount(plain),
-      genkoyoshi: Math.ceil(countGraphemes(noNLSpace) / 400),
-    };
-  }, [plain]);
+  const stats = useMemo(() => getTextStats(plain), [plain]);
 
   // 認証監視（初期化時に現在ユーザーを取得し、state変更を購読）
   useEffect(() => {
@@ -405,14 +260,6 @@ export default function Page() {
   }, [saveNow]);
 
   // 共有：発行/更新/解除
-  function computeExpiresISO(mode, customStr) {
-    if (mode === "none") return null;
-    if (mode === "24h") return new Date(Date.now() + 24 * 3600 * 1000).toISOString();
-    if (mode === "7d") return new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString();
-    if (mode === "custom") return toISOFromDatetimeLocal(customStr);
-    return null;
-  }
-
   const createShare = useCallback(async () => {
     if (!user || !currentId) return showToast("共有対象の下書きがありません。");
     const expires_at = computeExpiresISO(expiryMode, expiryCustom);
@@ -444,21 +291,9 @@ export default function Page() {
   const shareURL = shareToken ? `${BASE_URL}/s/${shareToken}` : "";
 
   // エクスポート
-  function download(filename, mime, text) {
-    const blob = new Blob([text], { type: mime });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob); a.download = filename;
-    document.body.appendChild(a); a.click(); a.remove();
-    window.setTimeout(() => URL.revokeObjectURL(a.href), 1500);
-  }
-  const exportMD   = useCallback(() => download(`${safeFilename(title)}.md`,  "text/markdown;charset=utf-8", content), [title, content]);
-  const exportTXT  = useCallback(() => download(`${safeFilename(title)}.txt`, "text/plain;charset=utf-8", stripMarkdown(content)), [title, content]);
-  const exportHTML = useCallback(() => {
-    const htmlBody = DOMPurify.sanitize(marked.parse(content || ""));
-    const name = safeFilename(title);
-    const html = `<!doctype html><html lang="${lang}"><meta charset="utf-8"><title>${name}</title><body>${htmlBody}</body></html>`;
-    download(`${name}.html`, "text/html;charset=utf-8", html);
-  }, [content, title, lang]);
+  const exportMD = useCallback(() => exportMarkdownDraft({ title, content }), [title, content]);
+  const exportTXT = useCallback(() => exportTextDraft({ title, content }), [title, content]);
+  const exportHTML = useCallback(() => exportHtmlDraft({ title, content, lang }), [content, title, lang]);
 
   // 検索・フィルタ・並び替え
   function draftChars(d) {
@@ -903,15 +738,3 @@ export default function Page() {
   );
 }
 
-/* 小さな表示コンポーネント */
-function Stat({ label, value, unit }) {
-  return (
-    <div className="card" style={{ padding: "8px 10px" }}>
-      <div className="kicker" style={{ marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 18, fontWeight: 700 }}>
-        {value}
-        <span className="kicker" style={{ marginLeft: 6 }}>{unit}</span>
-      </div>
-    </div>
-  );
-}
