@@ -1021,3 +1021,282 @@ ol {
   }
 }
 
+/* Writing workbench */
+.workbench {
+  display: grid;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel-soft);
+}
+
+.workbenchHeader,
+.goalPanel,
+.safetyPanel,
+.snapshotItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.workbenchHeader h2,
+.reviewPanel h3,
+.outlinePanel h3,
+.safetyPanel h3 {
+  font-size: 1rem;
+}
+
+.workbenchHeader p,
+.safetyPanel p,
+.emptyHint {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.qualityBadge {
+  display: grid;
+  place-items: center;
+  min-width: 92px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.qualityBadge span {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.qualityBadge strong {
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.goalPanel {
+  align-items: flex-end;
+  flex-wrap: wrap;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.goalControls,
+.safetyActions,
+.snapshotActions {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.goalControls label {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.progressTrack {
+  flex: 1 1 180px;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--border);
+}
+
+.progressTrack span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+}
+
+.goalMeta {
+  display: grid;
+  min-width: 86px;
+  text-align: right;
+}
+
+.goalMeta span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.insightGrid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(90px, 1fr));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--panel);
+}
+
+.insightMetric {
+  display: grid;
+  gap: 4px;
+  min-height: 72px;
+  padding: 10px;
+  border-right: 1px solid var(--border);
+}
+
+.insightMetric:last-child {
+  border-right: 0;
+}
+
+.insightMetric span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.insightMetric strong {
+  font-size: 1.1rem;
+}
+
+.workbenchColumns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(220px, 0.9fr);
+  gap: var(--space-3);
+}
+
+.reviewPanel,
+.outlinePanel,
+.safetyPanel,
+.snapshotItem {
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.checkList {
+  display: grid;
+  gap: 8px;
+  margin-top: var(--space-2);
+}
+
+.checkList li {
+  display: grid;
+  gap: 2px;
+  padding-left: 12px;
+  border-left: 3px solid var(--border);
+}
+
+.checkList li.ok {
+  border-left-color: var(--success);
+}
+
+.checkList li.warn {
+  border-left-color: var(--warning);
+}
+
+.checkList span,
+.outlineList,
+.snapshotItem span,
+.snapshotItem p {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.outlineList {
+  display: grid;
+  gap: 6px;
+  margin-top: var(--space-2);
+}
+
+.keywordRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.keywordChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+  font-size: 0.84rem;
+}
+
+.keywordChip small {
+  color: var(--muted);
+}
+
+.snapshotList {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.snapshotItem {
+  align-items: flex-start;
+}
+
+.snapshotItem div:first-child {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.snapshotItem p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 980px) {
+  .insightGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .workbenchColumns {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .workbenchHeader,
+  .goalPanel,
+  .safetyPanel,
+  .snapshotItem,
+  .goalControls,
+  .safetyActions,
+  .snapshotActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .qualityBadge,
+  .goalMeta {
+    width: 100%;
+  }
+
+  .goalMeta {
+    text-align: left;
+  }
+
+  .insightGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .insightMetric {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+/* Writing workbench mobile progress repair */
+@media (max-width: 680px) {
+  .progressTrack {
+    flex: none;
+    width: 100%;
+    height: 10px;
+  }
+}

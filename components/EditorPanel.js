@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { humanTimeLeft } from "@/lib/time";
+import { WritingWorkbench } from "@/components/WritingWorkbench";
 
 const SimpleMDE = dynamic(() => import("react-simplemde-editor"), { ssr: false });
 
@@ -32,6 +33,13 @@ export function EditorPanel({
   statusLabel,
   saveNow,
   deleteCurrentDraft,
+  insights,
+  goalType,
+  setGoalType,
+  goalValue,
+  setGoalValue,
+  goalProgress,
+  localSafety,
 }) {
   return (
     <section className="panel editorPanel" aria-label="エディタ">
@@ -118,6 +126,17 @@ export function EditorPanel({
           )}
         </div>
       </div>
+
+      <WritingWorkbench
+        t={t}
+        insights={insights}
+        goalType={goalType}
+        setGoalType={setGoalType}
+        goalValue={goalValue}
+        setGoalValue={setGoalValue}
+        goalProgress={goalProgress}
+        {...localSafety}
+      />
 
       <SimpleMDE value={content} onChange={handleContent} options={mdeOptions} />
 

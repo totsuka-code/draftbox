@@ -7,6 +7,7 @@ import { useI18n } from "@/lib/i18n";
 import { filterAndSortDrafts } from "@/lib/draftFilters";
 import { getMarkdownEditorOptions } from "@/lib/editorOptions";
 import { exportHtmlDraft, exportMarkdownDraft, exportTextDraft } from "@/lib/draftExport";
+import { analyzeWriting, getGoalProgress } from "@/lib/writingInsights";
 import { DraftListPanel } from "@/components/DraftListPanel";
 import { EditorPanel } from "@/components/EditorPanel";
 import { HeaderAuth } from "@/components/HeaderAuth";
@@ -14,6 +15,7 @@ import { StatsSummary } from "@/components/StatsSummary";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { useDraftEditor } from "@/hooks/useDraftEditor";
 import { useDraftShare } from "@/hooks/useDraftShare";
+import { useLocalDraftSafety } from "@/hooks/useLocalDraftSafety";
 import { useToast } from "@/hooks/useToast";
 
 export default function Page() {
@@ -35,6 +37,8 @@ export default function Page() {
   const [showFilters, setShowFilters] = useState(false);
   const [sortField, setSortField] = useState("updated");
   const [sortDir, setSortDir] = useState("desc");
+  const [goalType, setGoalType] = useState("chars");
+  const [goalValue, setGoalValue] = useState("2000");
 
   const {
     drafts,
@@ -126,6 +130,24 @@ export default function Page() {
   );
 
   const mdeOptions = useMemo(() => getMarkdownEditorOptions(t), [t]);
+  const insights = useMemo(() => analyzeWriting(content, lang), [content, lang]);
+  const goalProgress = useMemo(
+    () => getGoalProgress({ type: goalType, value: goalValue, insights }),
+    [goalType, goalValue, insights]
+  );
+
+  const restoreLocalDraft = useCallback(({ title: nextTitle, content: nextContent }) => {
+    handleTitle(nextTitle);
+    handleContent(nextContent);
+  }, [handleContent, handleTitle]);
+
+  const localSafety = useLocalDraftSafety({
+    title,
+    content,
+    onRestore: restoreLocalDraft,
+    showToast,
+    t,
+  });
 
   const exportMD = useCallback(() => exportMarkdownDraft({ title, content }), [title, content]);
   const exportTXT = useCallback(() => exportTextDraft({ title, content }), [title, content]);
@@ -222,6 +244,13 @@ export default function Page() {
           statusLabel={statusLabel}
           saveNow={saveNow}
           deleteCurrentDraft={deleteCurrentDraft}
+          insights={insights}
+          goalType={goalType}
+          setGoalType={setGoalType}
+          goalValue={goalValue}
+          setGoalValue={setGoalValue}
+          goalProgress={goalProgress}
+          localSafety={localSafety}
         />
       </div>
 
