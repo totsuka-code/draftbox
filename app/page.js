@@ -238,7 +238,6 @@ export default function Page() {
     if (authMode === "signin") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return showToast(`ログインに失敗しました: ${error.message}`);
-      await loadDrafts();
       showToast("ログインしました。");
     } else {
       if (password.length < 8) return showToast("パスワードは8文字以上でご設定ください。");
@@ -552,7 +551,7 @@ export default function Page() {
                   <button
                     type="button"
                     className="button"
-                    aria-selected={authMode === "signin"}
+                    aria-pressed={authMode === "signin"}
                     onClick={() => setAuthMode("signin")}
                   >
                     {t("signin")}
@@ -560,7 +559,7 @@ export default function Page() {
                   <button
                     type="button"
                     className="button"
-                    aria-selected={authMode === "signup"}
+                    aria-pressed={authMode === "signup"}
                     onClick={() => setAuthMode("signup")}
                   >
                     {t("signup")}
