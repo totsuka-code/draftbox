@@ -1609,3 +1609,469 @@ body.writingFocusActive .editorHeader {
     display: none;
   }
 }
+
+/* Usage-led writing desk */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #101314;
+    --fg: #f4f1e8;
+    --muted: #a6afa8;
+    --panel: #191d1e;
+    --panel-soft: #141819;
+    --border: #30383a;
+    --border-strong: #465154;
+    --primary: #68d0bd;
+    --primary-hover: #8be0d0;
+    --primary-fg: #071110;
+    --accent: #d7c48d;
+    --accent-soft: #2a261b;
+    --shadow-sm: 0 1px 0 rgba(255, 255, 255, 0.04), 0 14px 36px rgba(0, 0, 0, 0.18);
+  }
+}
+
+.container {
+  width: min(1680px, 100%);
+  padding: 18px clamp(16px, 2vw, 28px) 28px;
+}
+
+.appHeader {
+  grid-template-columns: minmax(260px, 0.8fr) minmax(420px, 1.2fr);
+  align-items: stretch;
+}
+
+.brandBlock,
+.accountPanel,
+.summaryStrip,
+.panel,
+.statsGrid {
+  box-shadow: none;
+}
+
+.brandBlock {
+  border-color: transparent;
+  background: transparent;
+  padding-inline: 0;
+}
+
+.brandMark {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #071110;
+}
+
+.brand {
+  font-size: 1.42rem;
+}
+
+.accountPanel {
+  border-color: var(--border);
+  background: color-mix(in srgb, var(--panel) 80%, transparent);
+}
+
+.statsPanel {
+  grid-template-columns: 1fr;
+}
+
+.summaryStrip {
+  display: grid;
+  grid-template-columns: auto auto auto minmax(220px, 1fr);
+  border-color: var(--border);
+  background: linear-gradient(180deg, var(--panel), var(--panel-soft));
+}
+
+.summaryPromise {
+  justify-self: end;
+  color: var(--fg);
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.statsGrid {
+  display: none;
+}
+
+.layout {
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+}
+
+.draftPanel,
+.editorPanel,
+.richEditorShell,
+.workbench,
+.shareBox,
+.exportPanel {
+  border-color: var(--border);
+}
+
+.panel {
+  background: var(--panel);
+}
+
+.editorPanel {
+  padding: 0;
+  overflow: hidden;
+}
+
+.editorHeader {
+  position: sticky;
+  top: 65px;
+  z-index: 12;
+  margin-bottom: 0;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  backdrop-filter: blur(14px);
+}
+
+.titleInput {
+  border-bottom: 0;
+  padding: 0;
+  font-size: clamp(1.55rem, 2.2vw, 2.25rem);
+}
+
+.editorWorkspaceGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  align-items: start;
+  gap: 0;
+}
+
+.writingColumn {
+  min-width: 0;
+  padding: 20px;
+}
+
+.writingRail {
+  position: sticky;
+  top: 145px;
+  display: grid;
+  gap: var(--space-3);
+  max-height: calc(100vh - 160px);
+  padding: 20px 20px 20px 0;
+  overflow: auto;
+}
+
+.richEditorShell {
+  margin-bottom: 0;
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.composerHeader {
+  padding: 12px 14px;
+  background: var(--panel);
+}
+
+.composerTitleGroup h2 {
+  font-size: 1rem;
+}
+
+.studioCommandBar {
+  padding: 10px 14px;
+  background: var(--panel-soft);
+}
+
+.editorCanvas {
+  padding: 0;
+  background: var(--panel);
+}
+
+.richEditorShell .EasyMDEContainer {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.richEditorShell .editor-toolbar {
+  padding: 9px 12px;
+  background: var(--panel);
+}
+
+.richEditorShell .EasyMDEContainer .CodeMirror {
+  min-height: calc(100vh - 300px);
+  background: var(--panel);
+  font-size: 1.08rem;
+  line-height: 1.86;
+}
+
+.richEditorShell .CodeMirror-scroll {
+  padding-block: 26px 34px;
+}
+
+.richEditorShell .CodeMirror pre.CodeMirror-line,
+.richEditorShell .CodeMirror pre.CodeMirror-line-like {
+  padding-inline: clamp(24px, 4vw, 58px);
+}
+
+.workbench {
+  margin-bottom: 0;
+  padding: 0;
+  gap: 0;
+  background: var(--panel);
+}
+
+.workbenchHeader,
+.goalPanel,
+.safetyPanel,
+.keywordRow,
+.workbenchColumns,
+.insightGrid,
+.snapshotList {
+  margin: 0;
+  border-radius: 0;
+}
+
+.workbenchHeader {
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.workbenchHeader p {
+  margin-top: 2px;
+}
+
+.qualityBadge {
+  min-width: 72px;
+  border-radius: var(--radius-sm);
+  background: var(--panel-soft);
+}
+
+.goalPanel {
+  display: grid;
+  padding: 14px;
+  border-width: 0 0 1px;
+  background: var(--panel);
+}
+
+.goalControls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 100%;
+}
+
+.goalControls .input.compact {
+  width: 100%;
+  min-width: 0;
+}
+
+.progressTrack {
+  width: 100%;
+}
+
+.goalMeta {
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  text-align: left;
+}
+
+.insightGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-width: 0 0 1px;
+}
+
+.insightMetric {
+  min-height: 64px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.insightMetric:nth-child(2n) {
+  border-right: 0;
+}
+
+.workbenchColumns {
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.reviewPanel,
+.outlinePanel,
+.safetyPanel,
+.snapshotItem {
+  border-width: 0 0 1px;
+  border-radius: 0;
+  background: var(--panel);
+}
+
+.keywordRow {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.shareBox,
+.exportPanel {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.shareControls,
+.expiryControls,
+.exportGroup {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: stretch;
+}
+
+.shareControls .button,
+.expiryControls .button,
+.exportGroup .button,
+.exportPanel > .button,
+.writingRail .input.compact {
+  width: 100%;
+}
+
+body.writingFocusActive .writingRail {
+  display: none;
+}
+
+body.writingFocusActive .editorWorkspaceGrid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+body.writingFocusActive .writingColumn {
+  width: min(1080px, 100%);
+  margin-inline: auto;
+}
+
+@media (max-width: 1240px) {
+  .editorWorkspaceGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .writingRail {
+    position: static;
+    max-height: none;
+    padding: 0 20px 20px;
+  }
+}
+
+@media (max-width: 980px) {
+  .appHeader,
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .summaryStrip {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .summaryPromise {
+    justify-self: start;
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 680px) {
+  .container {
+    padding: 12px;
+  }
+
+  .editorHeader {
+    position: static;
+    padding: 14px;
+  }
+
+  .writingColumn,
+  .writingRail {
+    padding: 12px;
+  }
+
+  .summaryStrip,
+  .goalControls,
+  .insightGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .insightMetric,
+  .insightMetric:nth-child(2n) {
+    border-right: 0;
+  }
+}
+
+/* Usage-led layout fit fixes */
+@media (max-width: 1500px) {
+  .editorWorkspaceGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .writingRail {
+    position: static;
+    max-height: none;
+    padding: 0 20px 20px;
+  }
+
+  .workbench {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1340px) {
+  .authForm {
+    grid-template-columns: auto minmax(180px, 1fr) minmax(180px, 1fr);
+  }
+
+  .authForm .button.primary,
+  .authForm > .button:not(.primary) {
+    width: fit-content;
+  }
+}
+
+@media (max-width: 760px) {
+  .authForm {
+    grid-template-columns: 1fr;
+  }
+
+  .authForm .button.primary,
+  .authForm > .button:not(.primary) {
+    width: 100%;
+  }
+}
+
+/* Compact local auth state */
+.localModePanel {
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px;
+  border: 1px solid rgba(215, 196, 141, 0.32);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent-soft) 72%, transparent);
+}
+
+.localModePanel strong {
+  font-size: 0.92rem;
+}
+
+.localModePanel span {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+@media (min-width: 1341px) {
+  .accountPanel {
+    align-content: center;
+  }
+}
+
+/* Header compact breakpoint */
+@media (max-width: 980px) {
+  .appHeader {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile writing first */
+@media (max-width: 680px) {
+  .editorPanel {
+    order: -1;
+  }
+
+  .draftPanel {
+    order: 2;
+  }
+}

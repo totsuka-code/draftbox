@@ -42,6 +42,11 @@ export function HeaderAuth({
             <span className="userPill">{user.email}</span>
             <button className="button" onClick={signOut}>{t("logout")}</button>
           </div>
+        ) : authDisabled ? (
+          <div className="localModePanel">
+            <strong>{t("localMode.title")}</strong>
+            <span>{t("localMode.body")}</span>
+          </div>
         ) : (
           <>
             <form onSubmit={handleAuth} className="authForm">
@@ -74,8 +79,6 @@ export function HeaderAuth({
                 {t("forgot")}
               </button>
             </form>
-            {authDisabled && <div className="configNotice">Supabase 未設定のため、保存とログインは無効です。</div>}
-
             {showReset && (
               <form onSubmit={sendReset} className="resetForm">
                 <input className="input" type="email" required placeholder={t("email")}
