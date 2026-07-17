@@ -1,0 +1,21 @@
+services:
+  web:
+    build:
+      context: .
+      target: dev
+    image: draftbox-dev
+    container_name: draftbox-web
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_TELEMETRY_DISABLED: "1"
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - .:/app
+      - draftbox_node_modules:/app/node_modules
+      - draftbox_next:/app/.next
+    command: npm run dev -- --hostname 0.0.0.0
+
+volumes:
+  draftbox_node_modules:
+  draftbox_next:

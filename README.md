@@ -37,5 +37,42 @@ flowchart LR
   Browser <--> NextJS["Next.js (App Router)"]
   NextJS -->|Supabase JS| DB["Supabase Postgres"]
   NextJS -->|Auth| DB
+```
 
+---
 
+## Local development
+
+Production deploys stay on Vercel. Supabase remains the hosted auth/database backend. Local development can run inside Docker Compose so Node dependencies do not need to be installed directly in the WSL working tree.
+
+Create a local environment file:
+
+```bash
+cp .env.example .env.local
+```
+
+Set the Supabase public URL and anon key:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+```
+
+Start the development server:
+
+```bash
+docker compose up --build
+```
+
+Open:
+
+```text
+http://localhost:3000
+```
+
+Stop:
+
+```bash
+docker compose down
+```
