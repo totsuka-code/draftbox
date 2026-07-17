@@ -7,6 +7,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { useI18n } from "@/lib/i18n";
 import { LIMITS, byteLength, validateDraft } from "@/lib/policy";
 import { countGraphemes, getTextStats, stripMarkdown } from "@/lib/textMetrics";
+import { filterAndSortDrafts } from "@/lib/draftFilters";
+import { getMarkdownEditorOptions } from "@/lib/editorOptions";
 import { computeExpiresISO, humanTimeLeft, toDatetimeLocalString } from "@/lib/time";
 import { exportHtmlDraft, exportMarkdownDraft, exportTextDraft } from "@/lib/draftExport";
 import { debounce } from "@/lib/debounce";
@@ -295,59 +297,64 @@ export default function Page() {
   const exportTXT = useCallback(() => exportTextDraft({ title, content }), [title, content]);
   const exportHTML = useCallback(() => exportHtmlDraft({ title, content, lang }), [content, title, lang]);
 
+  const selectDraft = useCallback((draft) => {
+    setCurrentId(draft.id);
+    setTitle(draft.title || t("title"));
+    setContent(draft.content || "");
+  }, [t]);
+
+  const createDraft = useCallback(async () => {
+    if (!user) return showToast("保存にはサインインが必要です。");
+    const err = validateDraft({ title, content, count: draftsCount });
+    if (err) return showToast(err);
+    const { data, error } = await supabase
+      .from("drafts")
+      .insert({ user_id: user.id, title: t("title"), content: "" })
+      .select()
+      .single();
+    if (error) return showToast(`下書きの作成に失敗しました: ${error.message}`);
+    setDrafts((prev) => [data, ...prev]);
+    setDraftsCount((count) => count + 1);
+    selectDraft(data);
+    setShareToken(null);
+    showToast("新しい下書きを作成しました。");
+  }, [user, title, content, draftsCount, t, showToast, selectDraft]);
+
+  const deleteCurrentDraft = useCallback(async () => {
+    if (!user || !currentId) return;
+    if (!confirm(t("actions.confirmDelete"))) return;
+    const { error } = await supabase.from("drafts").delete().eq("id", currentId);
+    if (error) return showToast(`削除に失敗しました: ${error.message}`);
+    const next = drafts.find((draft) => draft.id !== currentId);
+    setDrafts((prev) => prev.filter((draft) => draft.id !== currentId));
+    setDraftsCount((count) => Math.max(0, count - 1));
+    if (next) selectDraft(next);
+    else {
+      setCurrentId(null);
+      setTitle(t("title"));
+      setContent("");
+    }
+    setShareToken(null);
+    showToast("削除しました。");
+  }, [user, currentId, drafts, t, showToast, selectDraft]);
+
   // 検索・フィルタ・並び替え
-  function draftChars(d) {
-    const txt = stripMarkdown(d?.content || "");
-    return countGraphemes(txt.replace(/\r/g, ""));
-  }
+  const filteredDrafts = useMemo(
+    () =>
+      filterAndSortDrafts({
+        drafts,
+        query: q,
+        dateFrom,
+        dateTo,
+        minChars,
+        maxChars,
+        sortField,
+        sortDir,
+      }),
+    [drafts, q, dateFrom, dateTo, minChars, maxChars, sortField, sortDir]
+  );
 
-  const filteredDrafts = useMemo(() => {
-    let arr = drafts.map((d) => ({ ...d, _chars: draftChars(d) }));
-
-    const needle = q.trim().toLowerCase();
-    if (needle) {
-      arr = arr.filter(
-        (d) => (d.title || "").toLowerCase().includes(needle) || (d.content || "").toLowerCase().includes(needle)
-      );
-    }
-    if (dateFrom) {
-      const from = new Date(dateFrom + "T00:00:00");
-      arr = arr.filter((d) => new Date(d.updated_at) >= from);
-    }
-    if (dateTo) {
-      const to = new Date(dateTo + "T23:59:59.999");
-      arr = arr.filter((d) => new Date(d.updated_at) <= to);
-    }
-    const min = Number.isFinite(+minChars) && minChars !== "" ? +minChars : null;
-    const max = Number.isFinite(+maxChars) && maxChars !== "" ? +maxChars : null;
-    if (min !== null) arr = arr.filter((d) => d._chars >= min);
-    if (max !== null) arr = arr.filter((d) => d._chars <= max);
-
-    const coll = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
-    const byUpdated = (a, b) => new Date(a.updated_at) - new Date(b.updated_at);
-    const byTitle   = (a, b) => coll.compare(a.title || "", b.title || "");
-    const byChars   = (a, b) => a._chars - b._chars;
-
-    let cmp = byUpdated;
-    if (sortField === "title") cmp = byTitle;
-    if (sortField === "chars") cmp = byChars;
-    arr.sort((a, b) => (sortDir === "asc" ? cmp(a, b) : cmp(b, a)));
-
-    return arr;
-  }, [drafts, q, dateFrom, dateTo, minChars, maxChars, sortField, sortDir]);
-
-  const mdeOptions = useMemo(() => ({
-    spellChecker: false, status: false,
-    toolbar: [
-      "bold","italic","strikethrough","|",
-      "heading-1","heading-2","heading-3","|",
-      "code","quote","table","horizontal-rule","|",
-      "unordered-list","ordered-list","|",
-      "link","image","|",
-      "preview","side-by-side","fullscreen","|","guide"
-    ],
-    placeholder: t("editor.placeholder"),
-  }), [t]);
+  const mdeOptions = useMemo(() => getMarkdownEditorOptions(t), [t]);
 
   const statusLabel =
     status === "saving" ? t("status.saving") :
@@ -461,17 +468,7 @@ export default function Page() {
           <div className="toolbar" style={{ marginBottom: 8 }}>
             <button
               className="button primary"
-              onClick={async () => {
-                if (!user) return showToast("保存にはサインインが必要です。");
-                const err = validateDraft({ title, content, count: draftsCount }); if (err) return showToast(err);
-                const { data, error } = await supabase
-                  .from("drafts").insert({ user_id: user.id, title: t("title"), content: "" })
-                  .select().single();
-                if (error) return showToast(`下書きの作成に失敗しました: ${error.message}`);
-                setDrafts((p) => [data, ...p]); setDraftsCount((n) => n + 1);
-                setCurrentId(data.id); setTitle(data.title); setContent(data.content); setShareToken(null);
-                showToast("新しい下書きを作成しました。");
-              }}
+              onClick={createDraft}
               disabled={!user || draftsCount >= LIMITS.MAX_DRAFTS_PER_USER}
             >
               {t("drafts.new")}
@@ -608,7 +605,7 @@ export default function Page() {
               <li
                 key={d.id}
                 className={`item ${d.id === currentId ? "active" : ""}`}
-                onClick={() => { setCurrentId(d.id); setTitle(d.title || t("title")); setContent(d.content || ""); }}
+                onClick={() => selectDraft(d)}
               >
                 <div style={{ fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                   {d.title || t("title")}
@@ -715,19 +712,7 @@ export default function Page() {
             <span className={`statusChip ${status}`}>{statusLabel}</span>
             <button className="button" onClick={saveNow} disabled={!user}>{t("actions.saveNow")}</button>
             {user && currentId ? (
-              <button className="button danger" onClick={async () => {
-                if (!confirm(t("actions.confirmDelete"))) return;
-                const { error } = await supabase.from("drafts").delete().eq("id", currentId);
-                if (error) return showToast(`削除に失敗しました: ${error.message}`);
-                setDrafts((p) => p.filter((d) => d.id !== currentId));
-                setDraftsCount((n) => Math.max(0, n - 1));
-                const next = drafts.find((d) => d.id !== currentId);
-                setCurrentId(next?.id ?? null);
-                setTitle(next?.title ?? t("title"));
-                setContent(next?.content ?? "");
-                setShareToken(null);
-                showToast("削除しました。");
-              }}>{t("actions.deleteThisDraft")}</button>
+              <button className="button danger" onClick={deleteCurrentDraft}>{t("actions.deleteThisDraft")}</button>
             ) : null}
           </div>
         </section>
