@@ -76,3 +76,12 @@ http://localhost:3000
 ```bash
 docker compose down
 ```
+
+
+ビルド検証は開発サーバー用の `.next` キャッシュを汚さないよう、専用の builder ステージで実行します。
+
+```bash
+docker compose --profile check build build-check
+```
+
+`docker compose exec web npm run build` は、開発サーバーと同じ `.next` ボリュームへ本番ビルドを書き込み、ローカル表示が 500 エラーになることがあるため使いません。

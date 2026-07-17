@@ -16,6 +16,14 @@ services:
       - draftbox_next:/app/.next
     command: npm run dev -- --hostname 0.0.0.0
 
+  build-check:
+    build:
+      context: .
+      target: builder
+    image: draftbox-build-check
+    profiles:
+      - check
+
 volumes:
   draftbox_node_modules:
   draftbox_next:
