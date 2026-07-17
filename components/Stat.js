@@ -1,10 +1,10 @@
 export function Stat({ label, value, unit }) {
   return (
-    <div className="card" style={{ padding: "8px 10px" }}>
-      <div className="kicker" style={{ marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 18, fontWeight: 700 }}>
+    <div className="statCard">
+      <div className="statLabel">{label}</div>
+      <div className="statValue">
         {value}
-        <span className="kicker" style={{ marginLeft: 6 }}>{unit}</span>
+        <span>{unit}</span>
       </div>
     </div>
   );
